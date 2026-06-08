@@ -658,6 +658,14 @@ async function selecionarRuaOSM(nome, bairro) {
   }
 }
 
+// Servidores Overpass (tenta em ordem até um funcionar)
+const OVERPASS_SERVERS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+  'https://overpass.openstreetmap.ru/api/interpreter',
+];
+
 // Busca TODOS os segmentos da rua no Overpass e mescla numa geometria completa
 async function obterRuaCompletaOverpass(nome) {
   const nomeEsc = nome.replace(/"/g, '\\"');
@@ -665,10 +673,16 @@ async function obterRuaCompletaOverpass(nome) {
     + `way["name"="${nomeEsc}"](${JOINVILLE_BBOX});`
     + `out geom;`;
 
-  const resp = await fetch(
-    `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`
-  );
-  if (!resp.ok) throw new Error('Overpass indisponível.');
+  let resp, ultimoErro;
+  for (const servidor of OVERPASS_SERVERS) {
+    try {
+      resp = await fetch(`${servidor}?data=${encodeURIComponent(query)}`);
+      if (resp.ok) break;
+    } catch (e) {
+      ultimoErro = e;
+    }
+  }
+  if (!resp?.ok) throw new Error('Todos os servidores Overpass estão indisponíveis. Tente novamente em instantes.');
   const data = await resp.json();
 
   if (!data.elements?.length) throw new Error('Rua não encontrada no OSM.');
