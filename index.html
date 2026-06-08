@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UrbanMap — Joinville</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Cabeçalho -->
+  <header id="app-header">
+    <div class="header-inner">
+      <div class="header-brand">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="28" height="28" rx="6" fill="#1a73e8"/>
+          <rect x="4" y="13" width="20" height="3" rx="1.5" fill="white"/>
+          <rect x="4" y="8" width="12" height="2.5" rx="1.25" fill="rgba(255,255,255,0.7)"/>
+          <rect x="4" y="17.5" width="16" height="2.5" rx="1.25" fill="rgba(255,255,255,0.7)"/>
+        </svg>
+        <div>
+          <span class="brand-title">UrbanMap</span>
+          <span class="brand-sub">Joinville · SC</span>
+        </div>
+      </div>
+      <p class="header-tagline">Planejamento Urbano e Mobilidade</p>
+    </div>
+  </header>
+
+  <!-- Barra de pesquisa -->
+  <div id="search-container">
+    <div id="search-box">
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <circle cx="7.5" cy="7.5" r="5.5" stroke="#5f6368" stroke-width="1.8"/>
+        <path d="M12 12l3.5 3.5" stroke="#5f6368" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      <input type="text" id="search-input" placeholder="Pesquisar rua..." autocomplete="off" spellcheck="false">
+      <button id="search-clear" class="search-clear hidden" title="Limpar">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M12 4L4 12M4 4l8 8" stroke="#5f6368" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    <ul id="search-dropdown" class="hidden"></ul>
+  </div>
+
+  <!-- Dica flutuante no mapa -->
+  <div id="map-hint">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="8" r="7" stroke="#1a73e8" stroke-width="1.5"/>
+      <path d="M8 7v5M8 5v.5" stroke="#1a73e8" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    Clique em uma rua para visualizar a seção transversal
+  </div>
+
+  <!-- Botão flutuante: Adicionar Rua -->
+  <button id="btn-adicionar-rua" title="Adicionar nova rua ao mapa">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+    </svg>
+    Adicionar Rua
+  </button>
+
+  <!-- Mapa -->
+  <div id="map"></div>
+
+  <!-- Modal: adicionar rua por nome -->
+  <div id="modal-overlay" class="hidden">
+    <div id="modal-nova-rua">
+
+      <div class="modal-header">
+        <h3 id="modal-title">Adicionar Rua</h3>
+        <button id="modal-close" title="Fechar">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M14 4L4 14M4 4l10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- PASSO 1: busca pelo nome -->
+      <div id="modal-step-1" class="modal-body">
+        <div class="form-group">
+          <label>Nome da rua</label>
+          <div class="osm-search-box">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+              <circle cx="6.5" cy="6.5" r="5" stroke="#9aa0a6" stroke-width="1.6"/>
+              <path d="M10.5 10.5l3 3" stroke="#9aa0a6" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+            <input type="text" id="osm-search-input" placeholder="Ex: Rua XV de Novembro…" autocomplete="off" spellcheck="false">
+            <div id="osm-search-spinner" class="osm-spinner hidden"></div>
+          </div>
+          <ul id="osm-results" class="hidden"></ul>
+          <p class="osm-hint">A linha será desenhada automaticamente no mapa a partir dos dados do OpenStreetMap.</p>
+        </div>
+      </div>
+
+      <!-- PASSO 2: confirmar e complementar -->
+      <div id="modal-step-2" class="modal-body hidden">
+
+        <!-- Preview da rua selecionada -->
+        <div id="selected-street-card" class="selected-card">
+          <div class="selected-card-icon">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <rect x="1" y="7" width="14" height="2.5" rx="1.25" fill="#1a73e8"/>
+            </svg>
+          </div>
+          <div class="selected-card-info">
+            <span id="selected-nome" class="selected-nome"></span>
+            <span id="selected-bairro" class="selected-bairro"></span>
+          </div>
+          <button id="btn-trocar-rua" class="btn-trocar" title="Buscar outra rua">Trocar</button>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="nova-tipo">Tipo de via</label>
+            <input type="text" id="nova-tipo" placeholder="Via local, Avenida…">
+          </div>
+          <div class="form-group">
+            <label for="nova-sentido">Sentido</label>
+            <select id="nova-sentido">
+              <option value="twoway">⇆ Mão dupla</option>
+              <option value="oneway">→ Mão única</option>
+              <option value="pedestrian">🚶 Calçadão</option>
+              <option value="bike">🚲 Ciclovia</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="nova-descricao">Descrição (opcional)</label>
+          <textarea id="nova-descricao" rows="2" placeholder="Informações sobre a via…"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Imagem (opcional)</label>
+          <input type="file" id="nova-imagem-file" accept=".png,.jpg,.jpeg,.svg,.webp" style="display:none">
+          <button id="nova-btn-import" class="btn-import">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+              <path d="M7.5 1v9M4 6l3.5-3.5L11 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M1 11v1a2 2 0 002 2h9a2 2 0 002-2v-1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            </svg>
+            Importar PNG do computador
+          </button>
+          <div class="import-divider"><span>ou definir caminho</span></div>
+          <div class="path-row">
+            <input type="text" id="nova-imagem-path" placeholder="streetmix/minha-rua.png" spellcheck="false">
+          </div>
+          <div id="nova-img-preview-wrap" class="hidden">
+            <img id="nova-img-preview" src="" alt="Prévia">
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button id="modal-cancelar" class="btn-secondary">Cancelar</button>
+        <button id="modal-salvar" class="btn-primary hidden">
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+            <path d="M2 8l4 4L13 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Adicionar ao mapa
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Painel esquerdo: lista de ruas -->
+  <aside id="list-panel">
+    <div class="list-panel-header">
+      <div class="list-panel-title">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+          <rect x="1" y="2" width="13" height="2" rx="1" fill="#1a73e8"/>
+          <rect x="1" y="6.5" width="9" height="2" rx="1" fill="#1a73e8"/>
+          <rect x="1" y="11" width="11" height="2" rx="1" fill="#1a73e8"/>
+        </svg>
+        <span>Ruas</span>
+        <span id="list-count" class="list-count">0</span>
+      </div>
+    </div>
+
+    <div class="list-filter-wrap">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <circle cx="6" cy="6" r="4.5" stroke="#9aa0a6" stroke-width="1.5"/>
+        <path d="M10 10l2.5 2.5" stroke="#9aa0a6" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <input type="text" id="list-filter" placeholder="Filtrar ruas…" autocomplete="off" spellcheck="false">
+      <button id="list-filter-clear" class="hidden" title="Limpar">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M9 3L3 9M3 3l6 6" stroke="#9aa0a6" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <ul id="streets-list">
+      <li class="list-empty">Carregando ruas…</li>
+    </ul>
+  </aside>
+
+  <!-- Painel lateral -->
+  <aside id="side-panel">
+    <div class="panel-header">
+      <div class="panel-title-area">
+        <h2 id="panel-street-name">—</h2>
+        <div id="panel-badge" class="panel-badge"></div>
+      </div>
+      <div class="panel-actions">
+        <button id="btn-delete-street" title="Apagar rua">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M2 4h12M5 4V2.5A.5.5 0 015.5 2h5a.5.5 0 01.5.5V4M6 7v5M10 7v5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <rect x="3" y="4" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.6"/>
+          </svg>
+        </button>
+        <button id="close-panel" title="Fechar">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M15 5L5 15M5 5l10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Confirmação de exclusão (inline) -->
+    <div id="delete-confirm" class="hidden">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M8 6v4M8 11.5v.5" stroke="#c62828" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M7.13 2.5L1.34 13A1 1 0 002.2 14.5h11.6a1 1 0 00.87-1.5L8.87 2.5a1 1 0 00-1.74 0z" stroke="#c62828" stroke-width="1.5"/>
+      </svg>
+      <span>Apagar esta rua permanentemente?</span>
+      <button id="confirm-delete-yes">Apagar</button>
+      <button id="confirm-delete-no">Cancelar</button>
+    </div>
+
+    <div class="panel-body">
+
+      <div class="panel-section">
+        <div class="section-label">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <rect x="1" y="6" width="12" height="2" rx="1" fill="#1a73e8"/>
+            <path d="M10 4l3 3-3 3" stroke="#1a73e8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Seção Transversal (Streetmix)
+        </div>
+        <div class="image-wrapper">
+          <div id="img-spinner" class="img-spinner">
+            <div class="spinner"></div>
+          </div>
+          <div id="img-error" class="img-error hidden">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+              <circle cx="20" cy="20" r="18" stroke="#ccc" stroke-width="2"/>
+              <path d="M20 12v10M20 26v2" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+            <span>Imagem não disponível</span>
+          </div>
+          <img id="street-image" src="" alt="Seção transversal da rua">
+        </div>
+
+        <!-- Importar imagem -->
+        <div class="import-section">
+          <input type="file" id="file-import" accept=".png,.jpg,.jpeg,.svg,.webp" style="display:none">
+          <button id="btn-import-file" class="btn-import">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+              <path d="M7.5 1v9M4 6l3.5-3.5L11 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M1 11v1a2 2 0 002 2h9a2 2 0 002-2v-1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            </svg>
+            Importar PNG do computador
+          </button>
+          <div class="import-divider"><span>ou definir caminho</span></div>
+          <div class="path-row">
+            <input type="text" id="path-input" placeholder="streetmix/minha-rua.png" spellcheck="false">
+            <button id="btn-path-apply">Aplicar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-label">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="6" stroke="#1a73e8" stroke-width="1.5"/>
+            <path d="M7 5v4M7 3.5v.5" stroke="#1a73e8" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Informações da Via
+        </div>
+        <div class="info-grid">
+          <div class="info-card">
+            <span class="info-card-label">Sentido</span>
+            <span class="info-card-value" id="info-sentido">—</span>
+          </div>
+          <div class="info-card">
+            <span class="info-card-label">Tipo</span>
+            <span class="info-card-value" id="info-tipo">—</span>
+          </div>
+          <div class="info-card">
+            <span class="info-card-label">Bairro</span>
+            <span class="info-card-value" id="info-bairro">—</span>
+          </div>
+          <div class="info-card info-card-wide">
+            <span class="info-card-label">Descrição</span>
+            <span class="info-card-value" id="info-descricao">—</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- Lightbox da imagem -->
+  <div id="lightbox" class="hidden">
+    <div id="lightbox-backdrop"></div>
+    <div id="lightbox-content">
+      <button id="lightbox-close" title="Fechar">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <path d="M17 5L5 17M5 5l12 12" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <img id="lightbox-img" src="" alt="">
+      <p id="lightbox-caption"></p>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <!-- Suas credenciais Firebase (preencha firebase-config.js) -->
+  <script src="firebase-config.js"></script>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
