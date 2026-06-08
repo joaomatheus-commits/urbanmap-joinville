@@ -1,0 +1,102 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "nome": "Rua XV de Novembro",
+        "sentido": "pedestrian",
+        "tipo": "Calçadão",
+        "descricao": "Calçadão histórico do centro de Joinville, espaço de convivência e comércio.",
+        "imagem": "streetmix/rua-xv.svg"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-48.8545, -26.3028],
+          [-48.8515, -26.3026],
+          [-48.8485, -26.3024],
+          [-48.8455, -26.3022]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "nome": "Rua Princesa Isabel",
+        "sentido": "oneway",
+        "tipo": "Via coletora",
+        "descricao": "Via coletora com ciclofaixa e calçadas arborizadas.",
+        "imagem": "streetmix/rua-princesa-isabel.svg"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-48.8487, -26.2988],
+          [-48.8487, -26.3010],
+          [-48.8487, -26.3044],
+          [-48.8487, -26.3080]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "nome": "Avenida Beira Rio",
+        "sentido": "twoway",
+        "tipo": "Avenida",
+        "descricao": "Avenida marginal ao Rio Cachoeira com ciclovia e canteiro central.",
+        "imagem": "streetmix/rua-beira-rio.svg"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-48.8570, -26.3110],
+          [-48.8535, -26.3085],
+          [-48.8500, -26.3060],
+          [-48.8465, -26.3042],
+          [-48.8435, -26.3030]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "nome": "Rua João Pessoa",
+        "sentido": "oneway",
+        "tipo": "Via local",
+        "descricao": "Via local de acesso residencial com estacionamento lateral.",
+        "imagem": "streetmix/rua-joao-pessoa.svg"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-48.8462, -26.2992],
+          [-48.8460, -26.3020],
+          [-48.8458, -26.3055],
+          [-48.8456, -26.3085]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "nome": "Av. Hermann August Lepper",
+        "sentido": "twoway",
+        "tipo": "Avenida",
+        "descricao": "Avenida estrutural com quatro faixas e canteiro central ajardinado.",
+        "imagem": "streetmix/rua-lepper.svg"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-48.8525, -26.2965],
+          [-48.8518, -26.2995],
+          [-48.8510, -26.3025],
+          [-48.8502, -26.3055],
+          [-48.8494, -26.3085]
+        ]
+      }
+    }
+  ]
+}
