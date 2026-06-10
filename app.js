@@ -550,7 +550,7 @@ function adicionarSetas(layer, sentido) {
     pixelSize:   18,
     polygon:     false,
     pathOptions: {
-      color:   '#e53935',
+      color:   '#00c853',
       weight:  4,
       opacity: 1,
     },
