@@ -134,6 +134,174 @@ const RUAS_FALLBACK = {
   ],
 };
 
+// ── Catálogo local de imagens PNG (pasta feito/) ────
+// Arquivos "limpos" (sem sufixo numérico) ficam primeiro para prioridade no match
+const CATALOGO_ARQUIVOS = [
+  '3-de-maio', '6-de-janeiro', '9-de-marco',
+  'abdon-batista', 'agostinho-dos-santos', 'alfredo-marquardt',
+  'americo-vespucio', 'anemonas', 'anemonas-trecho-novo', 'anitapolis',
+  'antonio-carlos-americo-vespucio', 'antonio-goncalves',
+  'antonio-jose-da-costa-ayrton-senna', 'arno-waldemar-dohler',
+  'aube', 'augusto-bruno-nielson', 'augusto-schmidt',
+  'avenida-aluisio-pires-condeixa', 'avenida-doutor-paulo-medeiros',
+  'avenida-edmundo-doubrawa', 'avenida-firmino-da-silva',
+  'avenida-firmino-da-silva-trecho-novo', 'avenida-francisco-alves',
+  'avenida-hermann-august-lepper', 'avenida-jupiter', 'avenida-kurt-meinert',
+  'avenida-marcos-welmuth', 'avenida-marques-de-olinda',
+  'avenida-odilon-rocha-ferreira', 'avenida-paulo-schroeder',
+  'avenida-presidente-juscelino-kubitschek', 'avenida-urano',
+  'baercker-wagner', 'barra-velha', 'benicio-felipe-da-silva',
+  'benjamin-constant', 'bento-torquato-da-rocha', 'brasilia-cerro-azul',
+  'callisto', 'camelo-pardalis-tucana', 'canis-vinati-crux',
+  'carlos-frederico-adolfo-schneider', 'cidade-de-barreto',
+  'comandante-eugenio-lepper', 'complexo-helmuth-miers',
+  'conselheiro-pedreira', 'copacabana', 'coronel-francisco-gomes',
+  'coronel-procopio-gomes', 'coronel-vieira',
+  'da-independencia', 'das-purpuratas', 'david-thomas-pereira',
+  'do-principe', 'dona-francisca-joinville',
+  'dos-aimores', 'dos-bororos', 'dos-portugueses', 'dos-suicos',
+  'doutor-placido-olimpio-de-oliveira',
+  'emilio-landmann', 'engenheiro-niemeyer', 'esteves-junior',
+  'estrada-da-arataca', 'estrada-do-oeste-trecho-novo', 'estrada-fazenda',
+  'estrada-sai-estrada-timbe', 'estrada-timbe',
+  'estrada-werne-weiss-trecho-novo', 'etiene-arnaldo-douat-trecho-novo',
+  'eugenio-moreira', 'evaristo-da-veiga', 'expedicionario-amandos-miers',
+  'florianopolis', 'francisco-alves', 'general-valgas-neves',
+  'guanabara', 'guaruja', 'guilherme-krueger',
+  'helena-casagrande-ramos', 'humberto-pinheiro-vieira-trecho-novo',
+  'iririu', 'iririu-e-albano-schmidt', 'ivora.',
+  'jacinto-machado-trecho-novo', 'jacobus-felthaus',
+  'jaroslau-clemente-pesch-trecho-novo', 'jeronimo-coelho',
+  'joao-da-costa-junior', 'joao-eberhardt', 'joao-filete-de-oliveira',
+  'joinville-e-conselheiro-pedreira', 'jorge-augusto-emilio-muller',
+  'jorge-mayerle', 'jose-moreira', 'julio-de-mesquita-filho',
+  'leopoldo-beninca', 'marconi',
+  'maria-de-lurdes-bachtold', 'maria-julia-pereira-da-costa',
+  'marinho-garcia', 'marinho-lobo', 'menez-de-oliveira',
+  'ministro-calogeras', 'montezuma-de-carvalho', 'nacar',
+  'norberto-bachmann', 'norberto-haritsch', 'nossa-senhora-de-belem',
+  'olavo-bilac', 'osvaldo-altino-doria-trecho-novo',
+  'otto-pfuetzenreuter', 'ottokar-doerfel', 'padre-antonio-vieira',
+  'paulo-schneider', 'ponte-anemonas', 'ponte-aube', 'ponte-joinville',
+  'ponte-nacar', 'porto-belo-trecho-novo', 'porto-rico',
+  'presidente-affonso-penna', 'professor-clemens-schmidt',
+  'rio-velho-renato-caetano-da-silva-filho', 'rodovia-do-arroz',
+  'rolando-gurske', 'rua-alfredo-wersdoerfer', 'rua-colon',
+  'rua-conselheiro-arp', 'rua-machado-de-assis', 'rua-nacoes-unidas',
+  'rua-timbo', 'rudolf-baumer', 'rui-barbosa-trecho-novo',
+  'santa-catarina', 'santo-agostinho', 'sao-borja', 'sao-francisco',
+  'sao-joaquim', 'sao-leopoldo', 'sao-paulo-guaruja-simao-krueger',
+  'senador-rodrigo-lobo', 'sete-de-setembro',
+  'simao-kruger-jornalista-hilario-muller-caravelas',
+  'suburbana', 'tatuape', 'tenente-paulo-lopes-xavier-arp-papa-joao-xxiii',
+  'teresopolis',
+  'trecho-novo-486-zona-industrial', 'trecho-novo-alvino-souza-do-nascimento-estrada-timbe',
+  'trecho-novo-jativoca-trecho-novo', 'trecho-novo-jose-menestrina',
+  'trecho-novo-manoel-wermutt-de-moura', 'trecho-novo-modelo',
+  'trecho-novo-pio-s-santana', 'trecho-novo-rolf-brumer',
+  'trecho-novo-valdemar-medeiros',
+  'tupy', 'valenca', 'valter-karman', 'vereador-guilherme-zuege',
+  'visconde-de-taunay', 'waldemiro-rosa',
+  // Variantes numeradas (mesma rua, seção diferente)
+  'almirante-jaceguay-342', 'almirante-jaceguay-479',
+  'anita-garibaldi-414', 'anita-garibaldi-415', 'anita-garibaldi-433', 'anita-garibaldi-514',
+  'avenida-antonio-ramos-alvim-103', 'avenida-antonio-ramos-alvim-55',
+  'avenida-hermann-august-lepper-659', 'avenida-hermann-august-lepper-660',
+  'avenida-jose-vieira-455', 'avenida-presidente-juscelino-kubitschek sentido unico',
+  'avenida-santos-dumont-344', 'boehmerwald-112', 'boehmerwald-124',
+  'dona-francisca-133134', 'dona-francisca-343608609',
+  'getulio-vargas-18', 'getulio-vargas-418',
+  'guaira-138', 'guaira-532', 'iririu-447',
+  'joao-da-silva-137', 'joao-da-silva-434', 'joao-tomas-da-silva-426',
+  'julio-de-mesquita-filho-437', 'marcone-509', 'maria-regina-klock-russi-477',
+  'max-colin-457', 'max-colin-459', 'max-colin-496',
+  'olavo-bilac-12', 'padre-antonio-vieira-359', 'peixes-475', 'peixes-476',
+  'prefeito-baltazar-buschle-429', 'prefeito-baltazar-buschle-430', 'prefeito-baltazar-buschle-529',
+  'rio-branco-129', 'rio-branco-130', 'rio-branco-74',
+  'rua-rio-grande-do-norte-leite-ribeiro-e-eugenio-moreira (1)',
+  'saguacu-pastor-guilherme-rau (1)',
+  'trecho-novo-100', 'trecho-novo-101', 'trecho-novo-102', 'trecho-novo-105',
+  'trecho-novo-106', 'trecho-novo-111', 'trecho-novo-118', 'trecho-novo-119',
+  'trecho-novo-13', 'trecho-novo-145 (1)', 'trecho-novo-149', 'trecho-novo-19',
+  'trecho-novo-32', 'trecho-novo-494', 'trecho-novo-611', 'trecho-novo-86',
+  'trecho-novo-9', 'trecho-novo-99',
+  'trecho-novo-emilia-silvia-denk (1)',
+  'trecho-novo-funchal-aguas-de-chapeco-elis-regina-professor-clemens-schmidt (1)',
+  'trecho-novo-pio-s-santana-139',
+  'tuiuti-443', 'tuiuti-444588',
+  'waldemiro-jose-borges-378-e-631', 'waldemiro-jose-borges-393',
+  'xv-de-novembro-363-370', 'xv-de-novembro-461',
+  'xv-de-novembro-462463', 'xv-de-novembro-490492575',
+];
+
+// Converte filename do catálogo em nome para busca OSM
+function arquivoParaBusca(arquivo) {
+  let nome = arquivo
+    .replace(/\s*\(\d+\)\s*$/, '')          // remove "(1)" do final
+    .replace(/\s+sentido\s+unico\s*$/i, '') // remove "sentido unico"
+    .trim();
+
+  if (!nome.toLowerCase().startsWith('trecho-novo-')) {
+    nome = nome.replace(/-trecho-novo$/i, ''); // remove variante -trecho-novo
+    // Remove sufixos numéricos ou "-e" iterativamente
+    let anterior;
+    do {
+      anterior = nome;
+      nome = nome.replace(/-(?:\d+|e)$/, '');
+    } while (nome !== anterior);
+  }
+
+  const artigos = new Set(['de', 'da', 'do', 'das', 'dos', 'e', 'a', 'em', 'por', 'ao', 'na', 'no']);
+  return nome.split('-')
+    .map((p, i) => {
+      const pl = p.toLowerCase();
+      return (i > 0 && artigos.has(pl)) ? pl : p.charAt(0).toUpperCase() + p.slice(1);
+    })
+    .join(' ');
+}
+
+// Normaliza string para comparação (remove acentos, prefixos de tipo, espaços extras)
+function normalizarParaComparacao(s) {
+  return (s || '').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/\b(rua|avenida|av|estrada|rodovia|travessa|alameda|ponte)\b\.?\s*/gi, '')
+    .replace(/[^a-z0-9 ]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Encontra a melhor imagem do catálogo para um nome de rua do OSM
+function encontrarImagemCatalogo(nomeOsm) {
+  const alvo = normalizarParaComparacao(nomeOsm);
+  if (!alvo) return null;
+
+  let melhor = null;
+  let melhorScore = 0;
+
+  for (const arquivo of CATALOGO_ARQUIVOS) {
+    const busca = normalizarParaComparacao(arquivoParaBusca(arquivo));
+    let score = 0;
+
+    if (alvo === busca) {
+      score = 1000 + busca.length; // match exato, prefere mais específico
+    } else if (busca.length >= 4 && (alvo.includes(busca) || busca.includes(alvo))) {
+      score = Math.min(alvo.length, busca.length); // match parcial
+    }
+
+    if (score > melhorScore) {
+      melhorScore = score;
+      melhor = arquivo;
+    }
+  }
+
+  return melhor ? `feito/${melhor.replace(/ /g, '%20')}.png` : null;
+}
+
+// Gera o path de imagem para um arquivo do catálogo
+function pathImagem(arquivo) {
+  return `feito/${arquivo.replace(/ /g, '%20')}.png`;
+}
+
 // ── Estado da aplicação ─────────────────────────────
 const estado = {
   map:         null,
@@ -792,8 +960,27 @@ function irParaStep2() {
   document.getElementById('nova-tipo').value        = novaRua.tipo;
   document.getElementById('nova-sentido').value     = novaRua.sentido;
   document.getElementById('nova-descricao').value   = '';
-  document.getElementById('nova-imagem-path').value = '';
   document.getElementById('nova-img-preview-wrap').classList.add('hidden');
+
+  // Auto-preenche imagem do catálogo se disponível
+  const imagemCat = encontrarImagemCatalogo(novaRua.nome);
+  if (imagemCat) {
+    novaRua.imagemDataURL = null;
+    document.getElementById('nova-imagem-path').value = imagemCat;
+    mostrarPreviewModal(imagemCat);
+    // Mostra badge indicando que veio do catálogo
+    const labelImg = document.querySelector('#modal-step-2 .form-group:last-child label');
+    if (labelImg && !labelImg.querySelector('.catalogo-badge')) {
+      const badge = document.createElement('span');
+      badge.className = 'catalogo-badge';
+      badge.textContent = '✓ catálogo';
+      labelImg.appendChild(badge);
+    }
+  } else {
+    document.getElementById('nova-imagem-path').value = '';
+    // Remove badge se não encontrou
+    document.querySelector('.catalogo-badge')?.remove();
+  }
 }
 
 function removerPreviewRua() {
@@ -858,6 +1045,11 @@ async function salvarNovaRua() {
 function inicializarListaPanel() {
   const input     = document.getElementById('list-filter');
   const clearBtn  = document.getElementById('list-filter-clear');
+
+  document.getElementById('btn-importar-catalogo').addEventListener('click', importarCatalogoBatch);
+  document.getElementById('catalogo-progress-cancel').addEventListener('click', () => {
+    importacaoCancelada = true;
+  });
 
   input.addEventListener('input', () => {
     const q = input.value.trim();
@@ -1174,6 +1366,260 @@ function inicializarImportacao() {
     imagensPersonalizadas.set(estado.ruaAtual.nome, caminho);
     carregarImagem(caminho, estado.ruaAtual.nome);
   }
+}
+
+// ── Importação em lote do catálogo (download único) ─
+let importacaoCancelada = false;
+
+// Mapa de nomes OSM corretos do catálogo (arquivo → nome real com acentos)
+const CATALOGO_NOMES = new Map([
+  ['3-de-maio','Rua 3 de Maio'],['6-de-janeiro','Rua 6 de Janeiro'],
+  ['9-de-marco','Rua 9 de Março'],['abdon-batista','Rua Abdon Batista'],
+  ['agostinho-dos-santos','Rua Agostinho dos Santos'],
+  ['alfredo-marquardt','Rua Alfredo Marquardt'],
+  ['almirante-jaceguay-342','Rua Almirante Jaceguay'],
+  ['americo-vespucio','Rua Américo Vespúcio'],
+  ['anemonas','Rua Anêmonas'],['anitapolis','Rua Anitápolis'],
+  ['anita-garibaldi-414','Rua Anita Garibaldi'],
+  ['antonio-goncalves','Rua Antônio Gonçalves'],
+  ['arno-waldemar-dohler','Rua Arno Waldemar Döhler'],
+  ['aube','Rua Aube'],['augusto-bruno-nielson','Rua Augusto Bruno Nielson'],
+  ['augusto-schmidt','Rua Augusto Schmidt'],
+  ['avenida-aluisio-pires-condeixa','Avenida Aluísio Pires Condeixa'],
+  ['avenida-antonio-ramos-alvim-103','Avenida Antônio Ramos Alvim'],
+  ['avenida-doutor-paulo-medeiros','Avenida Doutor Paulo Medeiros'],
+  ['avenida-edmundo-doubrawa','Avenida Edmundo Doubrawa'],
+  ['avenida-firmino-da-silva','Avenida Firmino da Silva'],
+  ['avenida-francisco-alves','Avenida Francisco Alves'],
+  ['avenida-hermann-august-lepper','Avenida Hermann August Lepper'],
+  ['avenida-jose-vieira-455','Avenida José Vieira'],
+  ['avenida-jupiter','Avenida Júpiter'],
+  ['avenida-kurt-meinert','Avenida Kurt Meinert'],
+  ['avenida-marcos-welmuth','Avenida Marcos Welmuth'],
+  ['avenida-marques-de-olinda','Avenida Marquês de Olinda'],
+  ['avenida-odilon-rocha-ferreira','Avenida Odilon Rocha Ferreira'],
+  ['avenida-paulo-schroeder','Avenida Paulo Schroeder'],
+  ['avenida-presidente-juscelino-kubitschek','Avenida Presidente Juscelino Kubitschek'],
+  ['avenida-santos-dumont-344','Avenida Santos Dumont'],
+  ['avenida-urano','Avenida Urano'],
+  ['baercker-wagner','Rua Baercker Wagner'],['barra-velha','Rua Barra Velha'],
+  ['benicio-felipe-da-silva','Rua Benício Felipe da Silva'],
+  ['benjamin-constant','Rua Benjamin Constant'],
+  ['bento-torquato-da-rocha','Rua Bento Torquato da Rocha'],
+  ['boehmerwald-112','Rua Boehmerwald'],
+  ['callisto','Rua Callisto'],
+  ['carlos-frederico-adolfo-schneider','Rua Carlos Frederico Adolfo Schneider'],
+  ['cidade-de-barreto','Rua Cidade de Barreto'],
+  ['comandante-eugenio-lepper','Rua Comandante Eugênio Lepper'],
+  ['conselheiro-pedreira','Rua Conselheiro Pedreira'],
+  ['copacabana','Rua Copacabana'],
+  ['coronel-francisco-gomes','Rua Coronel Francisco Gomes'],
+  ['coronel-procopio-gomes','Rua Coronel Procópio Gomes'],
+  ['coronel-vieira','Rua Coronel Vieira'],
+  ['da-independencia','Rua da Independência'],
+  ['das-purpuratas','Rua das Purpuratas'],
+  ['david-thomas-pereira','Rua David Thomas Pereira'],
+  ['do-principe','Rua do Príncipe'],
+  ['dona-francisca-joinville','Rua Dona Francisca'],
+  ['dos-aimores','Rua dos Aimorés'],['dos-bororos','Rua dos Bororós'],
+  ['dos-portugueses','Rua dos Portugueses'],['dos-suicos','Rua dos Suíços'],
+  ['doutor-placido-olimpio-de-oliveira','Rua Doutor Plácido Olímpio de Oliveira'],
+  ['emilio-landmann','Rua Emílio Landmann'],
+  ['engenheiro-niemeyer','Rua Engenheiro Niemeyer'],
+  ['esteves-junior','Rua Esteves Júnior'],
+  ['estrada-da-arataca','Estrada da Arataca'],
+  ['estrada-fazenda','Estrada Fazenda'],['estrada-timbe','Estrada Timbé'],
+  ['eugenio-moreira','Rua Eugênio Moreira'],
+  ['evaristo-da-veiga','Rua Evaristo da Veiga'],
+  ['expedicionario-amandos-miers','Rua Expedicionário Amandos Miers'],
+  ['florianopolis','Rua Florianópolis'],['francisco-alves','Rua Francisco Alves'],
+  ['general-valgas-neves','Rua General Valgas Neves'],
+  ['getulio-vargas-18','Rua Getúlio Vargas'],
+  ['guaira-138','Rua Guaíra'],['guanabara','Rua Guanabara'],
+  ['guaruja','Rua Guarujá'],['guilherme-krueger','Rua Guilherme Krüger'],
+  ['helena-casagrande-ramos','Rua Helena Casagrande Ramos'],
+  ['iririu','Rua Iririu'],['iririu-447','Rua Iririu'],
+  ['jacobus-felthaus','Rua Jacobus Felthaus'],
+  ['jeronimo-coelho','Rua Jerônimo Coelho'],
+  ['joao-da-costa-junior','Rua João da Costa Júnior'],
+  ['joao-da-silva-137','Rua João da Silva'],
+  ['joao-eberhardt','Rua João Eberhardt'],
+  ['joao-filete-de-oliveira','Rua João Filete de Oliveira'],
+  ['joao-tomas-da-silva-426','Rua João Tomás da Silva'],
+  ['jorge-augusto-emilio-muller','Rua Jorge Augusto Emílio Müller'],
+  ['jorge-mayerle','Rua Jorge Mayerle'],['jose-moreira','Rua José Moreira'],
+  ['julio-de-mesquita-filho','Rua Júlio de Mesquita Filho'],
+  ['leopoldo-beninca','Rua Leopoldo Beninca'],
+  ['marconi','Rua Marconi'],['marcone-509','Rua Marcone'],
+  ['maria-de-lurdes-bachtold','Rua Maria de Lurdes Bachtold'],
+  ['maria-julia-pereira-da-costa','Rua Maria Júlia Pereira da Costa'],
+  ['maria-regina-klock-russi-477','Rua Maria Regina Klock Russi'],
+  ['marinho-garcia','Rua Marinho Garcia'],['marinho-lobo','Rua Marinho Lobo'],
+  ['max-colin-457','Rua Max Colin'],
+  ['menez-de-oliveira','Rua Menez de Oliveira'],
+  ['ministro-calogeras','Rua Ministro Calogeras'],
+  ['montezuma-de-carvalho','Rua Montezuma de Carvalho'],
+  ['nacar','Rua Nácar'],['norberto-bachmann','Rua Norberto Bachmann'],
+  ['norberto-haritsch','Rua Norberto Haritsch'],
+  ['nossa-senhora-de-belem','Rua Nossa Senhora de Belém'],
+  ['olavo-bilac','Rua Olavo Bilac'],
+  ['otto-pfuetzenreuter','Rua Otto Pfützenreuter'],
+  ['ottokar-doerfel','Rua Ottokar Doerfel'],
+  ['padre-antonio-vieira','Rua Padre Antônio Vieira'],
+  ['paulo-schneider','Rua Paulo Schneider'],['peixes-475','Rua Peixes'],
+  ['ponte-anemonas','Ponte Anêmonas'],['ponte-aube','Ponte Aube'],
+  ['ponte-joinville','Ponte Joinville'],['ponte-nacar','Ponte Nácar'],
+  ['porto-rico','Rua Porto Rico'],
+  ['prefeito-baltazar-buschle-429','Rua Prefeito Baltazar Buschle'],
+  ['presidente-affonso-penna','Rua Presidente Affonso Penna'],
+  ['professor-clemens-schmidt','Rua Professor Clemens Schmidt'],
+  ['rio-branco-129','Rua Rio Branco'],['rodovia-do-arroz','Rodovia do Arroz'],
+  ['rolando-gurske','Rua Rolando Gurske'],
+  ['rua-alfredo-wersdoerfer','Rua Alfredo Wersdoerfer'],
+  ['rua-colon','Rua Colón'],['rua-conselheiro-arp','Rua Conselheiro Arp'],
+  ['rua-machado-de-assis','Rua Machado de Assis'],
+  ['rua-nacoes-unidas','Rua Nações Unidas'],['rua-timbo','Rua Timbó'],
+  ['rudolf-baumer','Rua Rudolf Bäumer'],
+  ['santa-catarina','Rua Santa Catarina'],['santo-agostinho','Rua Santo Agostinho'],
+  ['sao-borja','Rua São Borja'],['sao-francisco','Rua São Francisco'],
+  ['sao-joaquim','Rua São Joaquim'],['sao-leopoldo','Rua São Leopoldo'],
+  ['senador-rodrigo-lobo','Rua Senador Rodrigo Lobo'],
+  ['sete-de-setembro','Rua Sete de Setembro'],
+  ['suburbana','Rua Suburbana'],['tatuape','Rua Tatuapé'],
+  ['teresopolis','Rua Teresópolis'],['tuiuti-443','Rua Tuiuti'],
+  ['tupy','Rua Tupy'],['valenca','Rua Valença'],['valter-karman','Rua Valter Karman'],
+  ['vereador-guilherme-zuege','Rua Vereador Guilherme Zuege'],
+  ['visconde-de-taunay','Rua Visconde de Taunay'],
+  ['waldemiro-jose-borges-393','Rua Waldemiro José Borges'],
+  ['waldemiro-rosa','Rua Waldemiro Rosa'],
+  ['xv-de-novembro-363-370','Rua XV de Novembro'],
+]);
+
+async function importarCatalogoBatch() {
+  const progressEl  = document.getElementById('catalogo-progress');
+  const progressBar = document.getElementById('catalogo-progress-bar');
+  const progressTxt = document.getElementById('catalogo-progress-text');
+  const progressSts = document.getElementById('catalogo-progress-stats');
+
+  const confirmar = confirm(
+    'Importar catálogo de ruas?\n\n' +
+    '1. Baixa todas as ruas de Joinville em 1 request (~20s)\n' +
+    '2. Salva automaticamente no mapa\n\nContinuar?'
+  );
+  if (!confirmar) return;
+
+  progressEl.classList.remove('hidden');
+  importacaoCancelada = false;
+  document.getElementById('btn-importar-catalogo').disabled = true;
+
+  // ── Passo 1: baixa TODAS as ruas de Joinville de uma vez ──
+  progressTxt.textContent = 'Baixando mapa de Joinville (1 request)…';
+  progressSts.textContent = 'Aguarde ~20 segundos';
+  progressBar.style.width = '5%';
+
+  const query = `[out:json][timeout:120];way["highway"]["name"](${JOINVILLE_BBOX});out geom;`;
+  let osmData = null;
+  for (const servidor of OVERPASS_SERVERS) {
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 90000);
+      const resp = await fetch(`${servidor}?data=${encodeURIComponent(query)}`, { signal: ctrl.signal });
+      clearTimeout(t);
+      if (resp.ok) { osmData = await resp.json(); break; }
+    } catch(e) { /* tenta próximo */ }
+  }
+
+  if (!osmData?.elements?.length) {
+    progressEl.classList.add('hidden');
+    document.getElementById('btn-importar-catalogo').disabled = false;
+    alert('Falha ao baixar dados do OpenStreetMap.\nVerifique a conexão e tente novamente.');
+    return;
+  }
+
+  // ── Passo 2: indexa por nome normalizado ──
+  progressTxt.textContent = 'Indexando…';
+  progressBar.style.width = '15%';
+
+  const normLocal = s => (s||'').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+
+  const porNome = new Map();
+  for (const way of osmData.elements) {
+    const nome = way.tags?.name; if (!nome) continue;
+    const k = normLocal(nome);
+    if (!porNome.has(k)) porNome.set(k, { nome, ways: [] });
+    porNome.get(k).ways.push(way);
+  }
+
+  // ── Passo 3: monta fila deduplicated ──
+  const visto = new Set(), fila = [];
+  for (const [arq, nomeOsm] of CATALOGO_NOMES) {
+    const k = normLocal(nomeOsm);
+    if (visto.has(k)) continue;
+    visto.add(k);
+    const jaNoMapa = indiceBusca.some(r => normLocal(r.nome) === k);
+    if (!jaNoMapa) fila.push({ arq, nomeOsm, k });
+  }
+
+  if (fila.length === 0) {
+    progressEl.classList.add('hidden');
+    document.getElementById('btn-importar-catalogo').disabled = false;
+    alert('Todas as ruas do catálogo já estão no mapa!');
+    return;
+  }
+
+  // ── Passo 4: salva no Firestore ──
+  const total = fila.length;
+  let sucesso = 0, erros = 0;
+
+  for (let i = 0; i < fila.length; i++) {
+    if (importacaoCancelada) break;
+    const { arq, nomeOsm, k } = fila[i];
+
+    progressTxt.textContent = `${i+1}/${total} — ${nomeOsm}`;
+    progressBar.style.width = `${15 + Math.round((i / total) * 83)}%`;
+    progressSts.textContent = `✓ ${sucesso}  ✗ ${erros}`;
+
+    // Match exato, depois parcial
+    let match = porNome.get(k);
+    if (!match) {
+      for (const [chave, val] of porNome) {
+        if (chave.includes(k) || k.includes(chave)) { match = val; break; }
+      }
+    }
+
+    if (!match) { erros++; continue; }
+
+    try {
+      const segs    = match.ways.map(w => w.geometry.map(n => [n.lon, n.lat]));
+      const tipos   = match.ways.map(w => w.tags?.highway || '').filter(Boolean);
+      const { tipo, sentido } = TIPO_OSM[modoArray(tipos)] || { tipo: 'Via local', sentido: 'twoway' };
+      const coords  = mesclarSegmentos(segs);
+      const geometry = coords.length === 1
+        ? { type: 'LineString', coordinates: coords[0] }
+        : { type: 'MultiLineString', coordinates: coords };
+
+      await window.db.collection('ruas').add({
+        nome: match.nome, bairro: '', tipo, sentido, descricao: '',
+        imagem: pathImagem(arq),
+        geometriaJson: JSON.stringify(geometry),
+        criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      sucesso++;
+    } catch(e) { erros++; }
+
+    if (i % 10 === 9) await new Promise(r => setTimeout(r, 200));
+  }
+
+  progressBar.style.width = '100%';
+  progressEl.classList.add('hidden');
+  document.getElementById('btn-importar-catalogo').disabled = false;
+
+  alert(importacaoCancelada
+    ? `Cancelado.\n✓ ${sucesso} salvas  ✗ ${erros} não encontradas`
+    : `Concluído!\n✓ ${sucesso} ruas adicionadas\n✗ ${erros} não encontradas no OSM`
+  );
 }
 
 // ── Utilitários ─────────────────────────────────────

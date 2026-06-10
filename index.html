@@ -197,6 +197,16 @@
     <ul id="streets-list">
       <li class="list-empty">Carregando ruas…</li>
     </ul>
+
+    <div class="list-panel-footer">
+      <button id="btn-importar-catalogo" class="btn-catalogo" title="Importar todas as ruas do catálogo automaticamente">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+          <path d="M6.5 1v7.5M4 6l2.5 2.5L9 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M1 9.5v1A1.5 1.5 0 002.5 12h8A1.5 1.5 0 0012 10.5v-1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        Importar Catálogo (235 ruas)
+      </button>
+    </div>
   </aside>
 
   <!-- Painel lateral -->
@@ -316,6 +326,19 @@
       </button>
       <img id="lightbox-img" src="" alt="">
       <p id="lightbox-caption"></p>
+    </div>
+  </div>
+
+  <!-- Progresso: importação em lote do catálogo -->
+  <div id="catalogo-progress" class="hidden">
+    <div class="catalogo-progress-inner">
+      <div class="catalogo-progress-title">Importando catálogo de ruas</div>
+      <div class="catalogo-progress-sub" id="catalogo-progress-text">Iniciando…</div>
+      <div class="catalogo-progress-track">
+        <div id="catalogo-progress-bar" class="catalogo-progress-fill"></div>
+      </div>
+      <div class="catalogo-progress-stats" id="catalogo-progress-stats">0 / 0</div>
+      <button id="catalogo-progress-cancel">Cancelar</button>
     </div>
   </div>
 
