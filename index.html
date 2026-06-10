@@ -217,6 +217,11 @@
         <div id="panel-badge" class="panel-badge"></div>
       </div>
       <div class="panel-actions">
+        <button id="btn-edit-street" title="Editar informações">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          </svg>
+        </button>
         <button id="btn-delete-street" title="Apagar rua">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M2 4h12M5 4V2.5A.5.5 0 015.5 2h5a.5.5 0 01.5.5V4M6 7v5M10 7v5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
@@ -292,7 +297,8 @@
           </svg>
           Informações da Via
         </div>
-        <div class="info-grid">
+        <!-- Visualização -->
+        <div class="info-grid" id="info-view">
           <div class="info-card">
             <span class="info-card-label">Sentido</span>
             <span class="info-card-value" id="info-sentido">—</span>
@@ -310,6 +316,49 @@
             <span class="info-card-value" id="info-descricao">—</span>
           </div>
         </div>
+
+        <!-- Formulário de edição -->
+        <form id="info-edit" class="hidden" onsubmit="salvarEdicao(event)">
+          <div class="edit-field">
+            <label>Nome</label>
+            <input type="text" id="edit-nome" required>
+          </div>
+          <div class="edit-row">
+            <div class="edit-field">
+              <label>Sentido</label>
+              <select id="edit-sentido">
+                <option value="twoway">Mão dupla</option>
+                <option value="oneway">Mão única</option>
+                <option value="pedestrian">Calçadão</option>
+                <option value="bike">Ciclovia</option>
+              </select>
+            </div>
+            <div class="edit-field">
+              <label>Tipo</label>
+              <select id="edit-tipo">
+                <option>Arterial</option>
+                <option>Coletora</option>
+                <option>Local</option>
+                <option>Trânsito rápido</option>
+                <option>Rural</option>
+                <option>Calçadão</option>
+                <option>Ciclovia</option>
+              </select>
+            </div>
+          </div>
+          <div class="edit-field">
+            <label>Bairro</label>
+            <input type="text" id="edit-bairro">
+          </div>
+          <div class="edit-field">
+            <label>Descrição</label>
+            <textarea id="edit-descricao" rows="3"></textarea>
+          </div>
+          <div class="edit-actions">
+            <button type="submit" class="btn-salvar-edit">Salvar</button>
+            <button type="button" class="btn-cancelar-edit" onclick="cancelarEdicao()">Cancelar</button>
+          </div>
+        </form>
       </div>
 
     </div>

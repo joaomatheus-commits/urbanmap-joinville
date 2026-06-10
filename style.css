@@ -352,6 +352,75 @@ body.panel-open #map-hint {
   grid-column: 1 / -1;
 }
 
+/* Formulário de edição inline */
+#info-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.edit-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.edit-field label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--text-muted, #888);
+  font-weight: 600;
+}
+.edit-field input,
+.edit-field select,
+.edit-field textarea {
+  background: var(--bg-card, #1e2a3a);
+  border: 1px solid var(--border, #2a3a4a);
+  border-radius: 6px;
+  color: var(--text-primary, #e8f0fe);
+  padding: 7px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+}
+.edit-field input:focus,
+.edit-field select:focus,
+.edit-field textarea:focus {
+  outline: none;
+  border-color: #1a73e8;
+}
+.edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+.btn-salvar-edit {
+  background: #1a73e8;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  flex: 1;
+}
+.btn-salvar-edit:hover { background: #1557b0; }
+.btn-cancelar-edit {
+  background: transparent;
+  color: var(--text-muted, #888);
+  border: 1px solid var(--border, #2a3a4a);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.btn-cancelar-edit:hover { color: #e8f0fe; }
+
 .info-card-label {
   font-size: 10px;
   font-weight: 700;

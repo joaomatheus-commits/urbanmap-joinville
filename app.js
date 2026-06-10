@@ -8,27 +8,47 @@ const CONFIG = {
   centro:  [-26.3044, -48.8487],
   zoom:    15,
   geojson: 'data/ruas.geojson',
-
-  estilos: {
-    normal: {
-      color:   '#4a90d9',
-      weight:  3,
-      opacity: 0.75,
-      lineCap: 'round',
-      lineJoin:'round',
-    },
-    hover: {
-      color:   '#1a73e8',
-      weight:  4,
-      opacity: 0.9,
-    },
-    ativo: {
-      color:   '#1a73e8',
-      weight:  5,
-      opacity: 1,
-    },
-  },
 };
+
+// Cores por classificação de via
+const CORES_TIPO = {
+  // Nomes novos
+  'Arterial':           '#f44336',
+  'Coletora':           '#ff9800',
+  'Trânsito rápido':    '#e91e63',
+  'Rural':              '#ffc107',
+  'Local':              '#ffffff',
+  'Calçadão':           '#795548',
+  'Ciclovia':           '#4caf50',
+  // Nomes antigos (compatibilidade com Firestore existente)
+  'Via arterial':       '#f44336',
+  'Via coletora':       '#ff9800',
+  'Via primária':       '#f44336',
+  'Via secundária':     '#ff9800',
+  'Via terciária':      '#ffffff',
+  'Via local':          '#ffffff',
+  'Via residencial':    '#ffffff',
+  'Via de convivência': '#ffffff',
+  'Via de serviço':     '#ffffff',
+  'Via expressa':       '#e91e63',
+  'Rodovia':            '#ffc107',
+  'Calçada':            '#795548',
+  'Caminho':            '#795548',
+};
+
+function corPorTipo(tipo) {
+  return CORES_TIPO[tipo] || '#4a90d9';
+}
+
+function estiloNormal(tipo) {
+  return { color: corPorTipo(tipo), weight: 3, opacity: 0.85, lineCap: 'round', lineJoin: 'round' };
+}
+function estiloHover(tipo) {
+  return { color: corPorTipo(tipo), weight: 5, opacity: 1 };
+}
+function estiloAtivo(tipo) {
+  return { color: corPorTipo(tipo), weight: 6, opacity: 1 };
+}
 
 // ── Dados embutidos (fallback quando aberto via file://) ──
 const RUAS_FALLBACK = {
@@ -403,7 +423,7 @@ function adicionarRuaDoFirestore(doc) {
   const feature = { type: 'Feature', properties: props, geometry };
 
   const layer = L.geoJSON(feature, {
-    style:         () => CONFIG.estilos.normal,
+    style:         (f) => estiloNormal(f.properties.tipo),
     onEachFeature: configurarEventos,
   }).addTo(estado.map);
 
@@ -445,7 +465,7 @@ async function carregarRuasLocais() {
   data.features.forEach(feature => {
     const props = { ...feature.properties, firestoreId: null };
     const layer = L.geoJSON({ ...feature, properties: props }, {
-      style:         () => CONFIG.estilos.normal,
+      style:         (f) => estiloNormal(f.properties.tipo),
       onEachFeature: configurarEventos,
     }).addTo(estado.map);
 
@@ -485,14 +505,15 @@ function aoClicar(e, layer, props) {
 
   // Desfaz seleção anterior
   if (estado.camadaAtiva && estado.camadaAtiva !== layer) {
-    estado.camadaAtiva.setStyle(CONFIG.estilos.normal);
+    const tipoAnterior = estado.ruaAtual?.tipo || '';
+    estado.camadaAtiva.setStyle(estiloNormal(tipoAnterior));
   }
 
   // Remove decorator anterior
   removerDecorator();
 
   // Aplica estilo ativo
-  layer.setStyle(CONFIG.estilos.ativo);
+  layer.setStyle(estiloAtivo(props.tipo));
   layer.bringToFront();
   estado.camadaAtiva = layer;
 
@@ -506,7 +527,8 @@ function aoClicar(e, layer, props) {
 // ── Hover ───────────────────────────────────────────
 function aoPassarMouse(e, layer) {
   if (layer !== estado.camadaAtiva) {
-    layer.setStyle(CONFIG.estilos.hover);
+    const tipo = indiceBusca.find(r => r.layer === layer)?.tipo || '';
+    layer.setStyle(estiloHover(tipo));
     layer.bringToFront();
   }
   estado.map.getContainer().style.cursor = 'pointer';
@@ -514,7 +536,8 @@ function aoPassarMouse(e, layer) {
 
 function aoSairMouse(e, layer) {
   if (layer !== estado.camadaAtiva) {
-    layer.setStyle(CONFIG.estilos.normal);
+    const tipo = indiceBusca.find(r => r.layer === layer)?.tipo || '';
+    layer.setStyle(estiloNormal(tipo));
   }
   estado.map.getContainer().style.cursor = '';
 }
@@ -538,18 +561,24 @@ function adicionarSetas(layer, sentido) {
   if (sentido === 'oneway') {
     patterns = [
       {
-        offset:  '10%',
-        repeat:  '18%',
-        symbol:  L.Symbol.arrowHead({ ...arrowOpts }),
+        offset: '10%',
+        repeat: '18%',
+        symbol: L.Symbol.arrowHead({ ...arrowOpts }),
       },
     ];
   } else if (sentido === 'twoway') {
-    // Setas para frente
     patterns = [
+      // Setas para frente
       {
-        offset:  '10%',
-        repeat:  '22%',
-        symbol:  L.Symbol.arrowHead({ ...arrowOpts }),
+        offset: '10%',
+        repeat: '25%',
+        symbol: L.Symbol.arrowHead({ ...arrowOpts }),
+      },
+      // Setas para trás (direção oposta)
+      {
+        offset: '22%',
+        repeat: '25%',
+        symbol: L.Symbol.arrowHead({ ...arrowOpts, angleCorrection: 180 }),
       },
     ];
   }
@@ -595,7 +624,74 @@ function abrirPainel(props) {
   document.body.classList.add('panel-open');
 }
 
+// ── Edição inline de informações da via ─────────────
+function abrirEdicao() {
+  if (!estado.ruaAtual) return;
+  const p = estado.ruaAtual;
+  document.getElementById('edit-nome').value     = p.nome      || '';
+  document.getElementById('edit-sentido').value  = p.sentido   || 'twoway';
+  document.getElementById('edit-tipo').value     = p.tipo      || 'Local';
+  document.getElementById('edit-bairro').value   = p.bairro    || '';
+  document.getElementById('edit-descricao').value= p.descricao || '';
+  document.getElementById('info-view').classList.add('hidden');
+  document.getElementById('info-edit').classList.remove('hidden');
+  document.getElementById('btn-edit-street').style.display = 'none';
+}
+
+function cancelarEdicao() {
+  document.getElementById('info-view').classList.remove('hidden');
+  document.getElementById('info-edit').classList.add('hidden');
+  document.getElementById('btn-edit-street').style.display = '';
+}
+
+async function salvarEdicao(e) {
+  e.preventDefault();
+  if (!estado.ruaAtual?.firestoreId) return;
+
+  const dados = {
+    nome:      document.getElementById('edit-nome').value.trim(),
+    sentido:   document.getElementById('edit-sentido').value,
+    tipo:      document.getElementById('edit-tipo').value,
+    bairro:    document.getElementById('edit-bairro').value.trim(),
+    descricao: document.getElementById('edit-descricao').value.trim(),
+  };
+
+  const btn = document.querySelector('.btn-salvar-edit');
+  btn.textContent = 'Salvando…';
+  btn.disabled = true;
+
+  try {
+    await window.db.collection('ruas').doc(estado.ruaAtual.firestoreId).update(dados);
+
+    // Atualiza estado local
+    Object.assign(estado.ruaAtual, dados);
+
+    // Atualiza visual do painel
+    document.getElementById('panel-street-name').textContent = dados.nome;
+    document.getElementById('info-sentido').textContent   = traduzirSentido(dados.sentido);
+    document.getElementById('info-tipo').textContent      = dados.tipo;
+    document.getElementById('info-bairro').textContent    = dados.bairro    || '—';
+    document.getElementById('info-descricao').textContent = dados.descricao || '—';
+    const badge = document.getElementById('panel-badge');
+    badge.className = 'panel-badge ' + dados.sentido;
+    badge.textContent = traduzirSentido(dados.sentido);
+
+    // Atualiza cor da linha no mapa
+    if (estado.camadaAtiva) {
+      estado.camadaAtiva.setStyle(estiloAtivo(dados.tipo));
+    }
+
+    cancelarEdicao();
+  } catch(err) {
+    alert('Erro ao salvar: ' + err.message);
+  } finally {
+    btn.textContent = 'Salvar';
+    btn.disabled = false;
+  }
+}
+
 function fecharPainel() {
+  cancelarEdicao();
   document.getElementById('side-panel').classList.remove('open');
   document.body.classList.remove('panel-open');
   ocultarConfirmDelete();
@@ -603,7 +699,7 @@ function fecharPainel() {
 
   // Desfaz seleção no mapa
   if (estado.camadaAtiva) {
-    estado.camadaAtiva.setStyle(CONFIG.estilos.normal);
+    estado.camadaAtiva.setStyle(estiloNormal(estado.ruaAtual?.tipo || ''));
     estado.camadaAtiva = null;
   }
   removerDecorator();
@@ -652,19 +748,19 @@ const novaRua = {
 };
 
 const TIPO_OSM = {
-  residential:  { tipo: 'Via residencial',   sentido: 'twoway'     },
-  primary:      { tipo: 'Via primária',       sentido: 'twoway'     },
-  secondary:    { tipo: 'Via secundária',     sentido: 'twoway'     },
-  tertiary:     { tipo: 'Via terciária',      sentido: 'twoway'     },
-  unclassified: { tipo: 'Via local',          sentido: 'twoway'     },
-  living_street:{ tipo: 'Via de convivência', sentido: 'twoway'     },
-  service:      { tipo: 'Via de serviço',     sentido: 'twoway'     },
-  pedestrian:   { tipo: 'Calçadão',           sentido: 'pedestrian' },
-  footway:      { tipo: 'Calçada',            sentido: 'pedestrian' },
-  path:         { tipo: 'Caminho',            sentido: 'pedestrian' },
-  cycleway:     { tipo: 'Ciclovia',           sentido: 'bike'       },
-  trunk:        { tipo: 'Via expressa',       sentido: 'twoway'     },
-  motorway:     { tipo: 'Rodovia',            sentido: 'oneway'     },
+  residential:  { tipo: 'Local',          sentido: 'twoway'     },
+  primary:      { tipo: 'Arterial',        sentido: 'twoway'     },
+  secondary:    { tipo: 'Coletora',        sentido: 'twoway'     },
+  tertiary:     { tipo: 'Coletora',        sentido: 'twoway'     },
+  unclassified: { tipo: 'Local',           sentido: 'twoway'     },
+  living_street:{ tipo: 'Local',           sentido: 'twoway'     },
+  service:      { tipo: 'Local',           sentido: 'twoway'     },
+  pedestrian:   { tipo: 'Calçadão',        sentido: 'pedestrian' },
+  footway:      { tipo: 'Calçadão',        sentido: 'pedestrian' },
+  path:         { tipo: 'Calçadão',        sentido: 'pedestrian' },
+  cycleway:     { tipo: 'Ciclovia',        sentido: 'bike'       },
+  trunk:        { tipo: 'Trânsito rápido', sentido: 'twoway'     },
+  motorway:     { tipo: 'Rural',           sentido: 'oneway'     },
 };
 
 function inicializarAdicionarRua() {
@@ -863,7 +959,9 @@ async function obterRuaCompletaOverpass(nome) {
   // Detecta tipo e sentido predominante
   const tipos = data.elements.map(w => w.tags?.highway || '').filter(Boolean);
   const tipoMaisComum = modoArray(tipos);
-  const { tipo, sentido } = TIPO_OSM[tipoMaisComum] || { tipo: 'Via local', sentido: 'twoway' };
+  const { tipo, sentido: sentidoBase } = TIPO_OSM[tipoMaisComum] || { tipo: 'Via local', sentido: 'twoway' };
+  const onewayCount = data.elements.filter(w => w.tags?.oneway === 'yes' || w.tags?.oneway === '1').length;
+  const sentido = (onewayCount > data.elements.length / 2) ? 'oneway' : sentidoBase;
 
   // Mescla segmentos em uma linha contínua
   const mesclado = mesclarSegmentos(segmentos);
@@ -1130,6 +1228,7 @@ function inicializarDelete() {
   document.getElementById('btn-delete-street').addEventListener('click', mostrarConfirmDelete);
   document.getElementById('confirm-delete-yes').addEventListener('click', confirmarDelete);
   document.getElementById('confirm-delete-no').addEventListener('click', ocultarConfirmDelete);
+  document.getElementById('btn-edit-street').addEventListener('click', abrirEdicao);
 }
 
 function mostrarConfirmDelete() {
@@ -1594,7 +1693,9 @@ async function importarCatalogoBatch() {
     try {
       const segs    = match.ways.map(w => w.geometry.map(n => [n.lon, n.lat]));
       const tipos   = match.ways.map(w => w.tags?.highway || '').filter(Boolean);
-      const { tipo, sentido } = TIPO_OSM[modoArray(tipos)] || { tipo: 'Via local', sentido: 'twoway' };
+      const { tipo, sentido: sentidoBase } = TIPO_OSM[modoArray(tipos)] || { tipo: 'Via local', sentido: 'twoway' };
+      const onewayCount = match.ways.filter(w => w.tags?.oneway === 'yes' || w.tags?.oneway === '1').length;
+      const sentido = (onewayCount > match.ways.length / 2) ? 'oneway' : sentidoBase;
       const coords  = mesclarSegmentos(segs);
       const geometry = coords.length === 1
         ? { type: 'LineString', coordinates: coords[0] }
