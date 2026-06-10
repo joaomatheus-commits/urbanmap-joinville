@@ -1405,12 +1405,12 @@ function selecionarRuaPorBusca(resultado) {
 
   // Resetar seleção anterior
   if (estado.camadaAtiva && estado.camadaAtiva !== layer) {
-    estado.camadaAtiva.setStyle(CONFIG.estilos.normal);
+    estado.camadaAtiva.setStyle(estiloNormal(estado.ruaAtual?.tipo || ''));
   }
   removerDecorator();
 
   // Aplica estilo ativo
-  layer.setStyle(CONFIG.estilos.ativo);
+  layer.setStyle(estiloAtivo(props.tipo));
   layer.bringToFront();
   estado.camadaAtiva = layer;
 
