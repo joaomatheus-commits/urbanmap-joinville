@@ -544,40 +544,39 @@ function aoSairMouse(e, layer) {
 
 // ── Setas de direção (PolylineDecorator) ────────────
 function adicionarSetas(layer, sentido) {
-  if (sentido === 'pedestrian') return; // calçadão não tem setas
+  if (sentido === 'pedestrian') return;
 
   const arrowOpts = {
-    pixelSize:   18,
+    pixelSize:   16,
     polygon:     false,
     pathOptions: {
       color:   '#00c853',
-      weight:  4,
+      weight:  3,
       opacity: 1,
     },
   };
 
   let patterns = [];
 
+  // repeat em pixels → espaçamento constante em qualquer zoom
   if (sentido === 'oneway') {
     patterns = [
       {
-        offset: '10%',
-        repeat: '18%',
+        offset: 40,
+        repeat: 90,
         symbol: L.Symbol.arrowHead({ ...arrowOpts }),
       },
     ];
   } else if (sentido === 'twoway') {
     patterns = [
-      // Setas para frente
       {
-        offset: '10%',
-        repeat: '25%',
+        offset: 30,
+        repeat: 110,
         symbol: L.Symbol.arrowHead({ ...arrowOpts }),
       },
-      // Setas para trás (direção oposta)
       {
-        offset: '22%',
-        repeat: '25%',
+        offset: 85,
+        repeat: 110,
         symbol: L.Symbol.arrowHead({ ...arrowOpts, angleCorrection: 180 }),
       },
     ];
