@@ -365,6 +365,14 @@ function inicializarMapa() {
 
   L.control.zoom({ position: 'bottomright' }).addTo(estado.map);
 
+  // Redesenha setas ao mudar zoom
+  estado.map.on('zoomend', () => {
+    if (estado.camadaAtiva && estado.ruaAtual) {
+      removerDecorator();
+      adicionarSetas(estado.camadaAtiva, estado.ruaAtual.sentido);
+    }
+  });
+
   // Inicia listener em tempo real do Firestore
   iniciarListenerFirestore();
 }
@@ -546,39 +554,30 @@ function aoSairMouse(e, layer) {
 function adicionarSetas(layer, sentido) {
   if (sentido === 'pedestrian') return;
 
+  const zoom = estado.map.getZoom();
+  if (zoom < 15) return; // muito longe — não mostrar setas
+
+  // Repeat cresce com o zoom: longe = mais espaçado, perto = mais denso
+  const repeat = zoom >= 17 ? 120 : zoom >= 16 ? 180 : 260;
+
   const arrowOpts = {
-    pixelSize:   16,
+    pixelSize:   14,
     polygon:     false,
     pathOptions: {
       color:   '#00c853',
-      weight:  3,
-      opacity: 1,
+      weight:  2.5,
+      opacity: 0.9,
     },
   };
 
   let patterns = [];
 
-  // repeat em pixels → espaçamento constante em qualquer zoom
   if (sentido === 'oneway') {
-    patterns = [
-      {
-        offset: 40,
-        repeat: 90,
-        symbol: L.Symbol.arrowHead({ ...arrowOpts }),
-      },
-    ];
+    patterns = [{ offset: repeat * 0.3, repeat, symbol: L.Symbol.arrowHead({ ...arrowOpts }) }];
   } else if (sentido === 'twoway') {
     patterns = [
-      {
-        offset: 30,
-        repeat: 110,
-        symbol: L.Symbol.arrowHead({ ...arrowOpts }),
-      },
-      {
-        offset: 85,
-        repeat: 110,
-        symbol: L.Symbol.arrowHead({ ...arrowOpts, angleCorrection: 180 }),
-      },
+      { offset: repeat * 0.2, repeat, symbol: L.Symbol.arrowHead({ ...arrowOpts }) },
+      { offset: repeat * 0.7, repeat, symbol: L.Symbol.arrowHead({ ...arrowOpts, angleCorrection: 180 }) },
     ];
   }
 
