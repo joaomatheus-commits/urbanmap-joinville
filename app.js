@@ -559,59 +559,53 @@ function aoSairMouse(e, layer) {
 }
 
 // ── Setas de direção permanentes ─────────────────────
-function criarPadroeSetas(sentido, zoom) {
-  if (sentido === 'pedestrian' || sentido === 'bike') return [];
-  const repeat = zoom >= 17 ? 200 : zoom >= 16 ? 300 : zoom >= 15 ? 450 : zoom >= 13 ? 600 : 900;
-  const size   = zoom >= 17 ? 16 : zoom >= 15 ? 12 : 8;
-  const opts = {
-    pixelSize: size,
-    polygon:   false,
-    pathOptions: { color: '#00c853', weight: 2, opacity: 1 },
-  };
-  if (sentido === 'oneway') {
-    return [{ offset: '50%', repeat, symbol: L.Symbol.arrowHead(opts) }];
-  }
-  // mão dupla: > e < intercalados na mesma linha
-  return [
-    { offset: '25%', repeat, symbol: L.Symbol.arrowHead(opts) },
-    { offset: '75%', repeat, symbol: L.Symbol.arrowHead({ ...opts, angleCorrection: 180 }) },
-  ];
+
+function criarDecoradores(layer, sentido, zoom) {
+  const decs = [];
+  try {
+    let latlngs = layer.getLatLngs();
+    if (!latlngs || !latlngs.length) return decs;
+    // Achata MultiPolyline em array simples
+    if (Array.isArray(latlngs[0]) || (latlngs[0] && latlngs[0].lat === undefined)) {
+      latlngs = latlngs.flat();
+    }
+
+    const repeat = zoom >= 17 ? 200 : zoom >= 16 ? 300 : zoom >= 15 ? 450 : zoom >= 13 ? 600 : 900;
+    const size   = zoom >= 17 ? 16 : zoom >= 15 ? 12 : 8;
+    const opts   = { pixelSize: size, polygon: false, pathOptions: { color: '#00c853', weight: 2, opacity: 1 } };
+    const pat    = [{ offset: 20, repeat, symbol: L.Symbol.arrowHead(opts) }];
+
+    decs.push(L.polylineDecorator(latlngs, { patterns: pat }).addTo(estado.map));
+
+    if (sentido === 'twoway') {
+      const rev = [...latlngs].reverse();
+      decs.push(L.polylineDecorator(rev, { patterns: pat }).addTo(estado.map));
+    }
+  } catch(e) {}
+  return decs;
 }
 
 function adicionarSetaPermanente(layer, sentido) {
   removerSetaPermanente(layer);
-  const zoom = estado.map.getZoom();
-  const patterns = criarPadroeSetas(sentido, zoom);
-  if (!patterns.length) return;
-  try {
-    const latlngs = layer.getLatLngs();
-    if (!latlngs || !latlngs.length) return;
-    const dec = L.polylineDecorator(latlngs, { patterns }).addTo(estado.map);
-    decoradoresPermanentes.set(layer, dec);
-  } catch(e) { /* layer ainda não pronto */ }
+  const decs = criarDecoradores(layer, sentido, estado.map.getZoom());
+  if (decs.length) decoradoresPermanentes.set(layer, decs);
 }
 
 function removerSetaPermanente(layer) {
-  const dec = decoradoresPermanentes.get(layer);
-  if (dec) { estado.map.removeLayer(dec); decoradoresPermanentes.delete(layer); }
+  const decs = decoradoresPermanentes.get(layer);
+  if (decs) { decs.forEach(d => estado.map.removeLayer(d)); decoradoresPermanentes.delete(layer); }
 }
 
 function redesenharTodasSetas() {
   const zoom = estado.map.getZoom();
-  decoradoresPermanentes.forEach(dec => estado.map.removeLayer(dec));
+  decoradoresPermanentes.forEach(decs => decs.forEach(d => estado.map.removeLayer(d)));
   decoradoresPermanentes.clear();
   const vistos = new Set();
   for (const r of indiceBusca) {
     if (vistos.has(r.layer)) continue;
     vistos.add(r.layer);
-    const patterns = criarPadroeSetas(r.props.sentido, zoom);
-    if (!patterns.length) continue;
-    try {
-      const latlngs = r.layer.getLatLngs();
-      if (!latlngs || !latlngs.length) continue;
-      const dec = L.polylineDecorator(latlngs, { patterns }).addTo(estado.map);
-      decoradoresPermanentes.set(r.layer, dec);
-    } catch(e) { /* ignora layers com problema */ }
+    const decs = criarDecoradores(r.layer, r.props.sentido, zoom);
+    if (decs.length) decoradoresPermanentes.set(r.layer, decs);
   }
 }
 
