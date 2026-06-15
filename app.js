@@ -329,14 +329,6 @@ const estado = {
   ruaAtual:    null,
 };
 
-// Decorators permanentes: layer → PolylineDecorator
-const decoradoresPermanentes = new Map();
-
-let _debounceDecorators = null;
-function agendarRedesenhoSetas() {
-  clearTimeout(_debounceDecorators);
-  _debounceDecorators = setTimeout(redesenharTodasSetas, 300);
-}
 
 // Map de layers por firestoreId para remoção precisa
 const layersPorId = new Map();
@@ -373,8 +365,6 @@ function inicializarMapa() {
 
   L.control.zoom({ position: 'bottomright' }).addTo(estado.map);
 
-  // Redesenha todas as setas ao mudar zoom
-  estado.map.on('zoomend', redesenharTodasSetas);
 
   // Inicia listener em tempo real do Firestore
   iniciarListenerFirestore();
@@ -443,7 +433,6 @@ function adicionarRuaDoFirestore(doc) {
   layer.eachLayer(l => {
     indiceBusca.push({ nome: props.nome, tipo: props.tipo, sentido: props.sentido, layer: l, props });
   });
-  agendarRedesenhoSetas();
 }
 
 function removerRuaDoMapa(firestoreId) {
@@ -453,8 +442,6 @@ function removerRuaDoMapa(firestoreId) {
   estado.map.removeLayer(layer);
   layersPorId.delete(firestoreId);
 
-  // Remove decoradores dos segmentos desta rua
-  layer.eachLayer(l => removerSetaPermanente(l));
 
   // Remove do índice de busca
   const idx = indiceBusca.findIndex(r => r.props.firestoreId === firestoreId);
@@ -489,7 +476,6 @@ async function carregarRuasLocais() {
     });
   });
   renderizarListaRuas();
-  agendarRedesenhoSetas();
 }
 
 // ── Eventos por feature ─────────────────────────────
@@ -558,58 +544,6 @@ function aoSairMouse(e, layer) {
   estado.map.getContainer().style.cursor = '';
 }
 
-// ── Setas de direção permanentes ─────────────────────
-
-function criarDecoradores(layer, sentido, zoom) {
-  const decs = [];
-  try {
-    let latlngs = layer.getLatLngs();
-    if (!latlngs || !latlngs.length) return decs;
-    // Achata MultiPolyline em array simples
-    if (Array.isArray(latlngs[0]) || (latlngs[0] && latlngs[0].lat === undefined)) {
-      latlngs = latlngs.flat();
-    }
-
-    const repeat = zoom >= 17 ? 200 : zoom >= 16 ? 300 : zoom >= 15 ? 450 : zoom >= 13 ? 600 : 900;
-    const size   = zoom >= 17 ? 16 : zoom >= 15 ? 12 : 8;
-    const opts   = { pixelSize: size, polygon: false, pathOptions: { color: '#00c853', weight: 2, opacity: 1 } };
-    const pat    = [{ offset: 20, repeat, symbol: L.Symbol.arrowHead(opts) }];
-
-    decs.push(L.polylineDecorator(latlngs, { patterns: pat }).addTo(estado.map));
-
-    if (sentido === 'twoway') {
-      const rev = [...latlngs].reverse();
-      decs.push(L.polylineDecorator(rev, { patterns: pat }).addTo(estado.map));
-    }
-  } catch(e) {}
-  return decs;
-}
-
-function adicionarSetaPermanente(layer, sentido) {
-  removerSetaPermanente(layer);
-  const decs = criarDecoradores(layer, sentido, estado.map.getZoom());
-  if (decs.length) decoradoresPermanentes.set(layer, decs);
-}
-
-function removerSetaPermanente(layer) {
-  const decs = decoradoresPermanentes.get(layer);
-  if (decs) { decs.forEach(d => estado.map.removeLayer(d)); decoradoresPermanentes.delete(layer); }
-}
-
-function redesenharTodasSetas() {
-  const zoom = estado.map.getZoom();
-  decoradoresPermanentes.forEach(decs => decs.forEach(d => estado.map.removeLayer(d)));
-  decoradoresPermanentes.clear();
-  const vistos = new Set();
-  for (const r of indiceBusca) {
-    if (vistos.has(r.layer)) continue;
-    vistos.add(r.layer);
-    const decs = criarDecoradores(r.layer, r.props.sentido, zoom);
-    if (decs.length) decoradoresPermanentes.set(r.layer, decs);
-  }
-}
-
-// Mantido para compatibilidade (não faz nada — setas são permanentes)
 function adicionarSetas() {}
 function removerDecorator() {}
 
@@ -699,7 +633,7 @@ async function salvarEdicao(e) {
       estado.camadaAtiva.setStyle(estiloAtivo(dados.tipo));
     }
 
-    // Atualiza sentido no índice e redesenha setas desta rua
+    // Atualiza sentido/tipo no índice e redesenha seta da rua ativa
     const firestoreId = estado.ruaAtual.firestoreId;
     for (const r of indiceBusca) {
       if (r.props.firestoreId === firestoreId) {
@@ -707,9 +641,10 @@ async function salvarEdicao(e) {
         r.props.sentido = dados.sentido;
         r.tipo = dados.tipo;
         r.props.tipo = dados.tipo;
-        removerSetaPermanente(r.layer);
-        adicionarSetaPermanente(r.layer, dados.sentido);
       }
+    }
+    if (estado.camadaAtiva) {
+      adicionarSetas(estado.camadaAtiva, dados.sentido);
     }
 
     cancelarEdicao();
