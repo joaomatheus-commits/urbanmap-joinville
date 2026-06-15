@@ -563,9 +563,9 @@ function criarPadroeSetas(sentido, zoom) {
   if (sentido === 'pedestrian' || sentido === 'bike') return [];
   const repeat = zoom >= 17 ? 110 : zoom >= 16 ? 170 : zoom >= 15 ? 250 : 400;
   const opts = {
-    pixelSize: zoom >= 16 ? 12 : 9,
+    pixelSize: zoom >= 17 ? 20 : zoom >= 16 ? 16 : 13,
     polygon:   false,
-    pathOptions: { color: '#00c853', weight: 2, opacity: 0.85 },
+    pathOptions: { color: '#00c853', weight: 2.5, opacity: 0.95 },
   };
   if (sentido === 'oneway') {
     return [{ offset: repeat * 0.3, repeat, symbol: L.Symbol.arrowHead(opts) }];
