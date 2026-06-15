@@ -561,7 +561,7 @@ function aoSairMouse(e, layer) {
 // ── Setas de direção permanentes ─────────────────────
 function criarPadroeSetas(sentido, zoom) {
   if (sentido === 'pedestrian' || sentido === 'bike') return [];
-  const repeat = zoom >= 17 ? 110 : zoom >= 16 ? 170 : zoom >= 15 ? 250 : 400;
+  const repeat = zoom >= 17 ? 110 : zoom >= 16 ? 170 : 250;
   const opts = {
     pixelSize: zoom >= 17 ? 36 : zoom >= 16 ? 28 : 22,
     polygon:   false,
@@ -579,7 +579,7 @@ function criarPadroeSetas(sentido, zoom) {
 function adicionarSetaPermanente(layer, sentido) {
   removerSetaPermanente(layer);
   const zoom = estado.map.getZoom();
-  if (zoom < 14) return;
+  if (zoom < 15) return;
   const patterns = criarPadroeSetas(sentido, zoom);
   if (!patterns.length) return;
   try {
@@ -599,7 +599,7 @@ function redesenharTodasSetas() {
   const zoom = estado.map.getZoom();
   decoradoresPermanentes.forEach(dec => estado.map.removeLayer(dec));
   decoradoresPermanentes.clear();
-  if (zoom < 14) return;
+  if (zoom < 15) return;
   const vistos = new Set();
   for (const r of indiceBusca) {
     if (vistos.has(r.layer)) continue;
