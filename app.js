@@ -365,6 +365,8 @@ function inicializarMapa() {
 
   L.control.zoom({ position: 'bottomright' }).addTo(estado.map);
 
+  // Redesenha seta ao mudar zoom (mantém rua selecionada com tamanho correto)
+  estado.map.on('zoomend', _desenharSetas);
 
   // Inicia listener em tempo real do Firestore
   iniciarListenerFirestore();
@@ -544,8 +546,47 @@ function aoSairMouse(e, layer) {
   estado.map.getContainer().style.cursor = '';
 }
 
-function adicionarSetas() {}
-function removerDecorator() {}
+// ── Setas de direção (só rua selecionada) ────────────
+let _decAtivos    = [];
+let _decLayer     = null;
+let _decSentido   = null;
+
+function adicionarSetas(layer, sentido) {
+  removerDecorator();
+  _decLayer   = layer;
+  _decSentido = sentido;
+  _desenharSetas();
+}
+
+function _desenharSetas() {
+  if (!_decLayer) return;
+  _decAtivos.forEach(d => estado.map.removeLayer(d));
+  _decAtivos = [];
+
+  const zoom   = estado.map.getZoom();
+  const repeat = zoom >= 17 ? 150 : zoom >= 16 ? 220 : 320;
+  const size   = zoom >= 17 ? 16  : zoom >= 16 ? 13  : 11;
+
+  const mkArrow = (correcao) => L.Symbol.arrowHead({
+    pixelSize: size, polygon: true, angleCorrection: correcao || 0,
+    pathOptions: { fillColor: '#00c853', fillOpacity: 1, stroke: false },
+  });
+
+  const patterns = [{ offset: 30, repeat, symbol: mkArrow(0) }];
+  if (_decSentido === 'twoway')
+    patterns.push({ offset: Math.round(repeat / 2), repeat, symbol: mkArrow(180) });
+
+  try {
+    _decAtivos.push(L.polylineDecorator(_decLayer, { patterns }).addTo(estado.map));
+  } catch(e) {}
+}
+
+function removerDecorator() {
+  _decAtivos.forEach(d => estado.map.removeLayer(d));
+  _decAtivos  = [];
+  _decLayer   = null;
+  _decSentido = null;
+}
 
 // ── Painel lateral ──────────────────────────────────
 function abrirPainel(props) {
@@ -1367,24 +1408,26 @@ function inicializarPesquisa() {
 
 // Seleciona rua a partir do resultado de busca
 function selecionarRuaPorBusca(resultado) {
-  const { layer, props } = resultado;
+  const { props } = resultado;
+  // Usa a camada completa da rua (todos os segmentos)
+  const fullLayer = (props.firestoreId && layersPorId.get(props.firestoreId)) || resultado.layer;
 
   // Resetar seleção anterior
-  if (estado.camadaAtiva && estado.camadaAtiva !== layer) {
+  if (estado.camadaAtiva && estado.camadaAtiva !== fullLayer) {
     estado.camadaAtiva.setStyle(estiloNormal(estado.ruaAtual?.tipo || ''));
   }
   removerDecorator();
 
   // Aplica estilo ativo
-  layer.setStyle(estiloAtivo(props.tipo));
-  layer.bringToFront();
-  estado.camadaAtiva = layer;
+  fullLayer.setStyle(estiloAtivo(props.tipo));
+  fullLayer.bringToFront();
+  estado.camadaAtiva = fullLayer;
 
   // Zoom para a rua selecionada
-  estado.map.fitBounds(layer.getBounds(), { padding: [60, 60], maxZoom: 17 });
+  estado.map.fitBounds(fullLayer.getBounds(), { padding: [60, 60], maxZoom: 17 });
 
   // Setas de direção
-  adicionarSetas(layer, props.sentido);
+  adicionarSetas(fullLayer, props.sentido);
 
   // Abre painel
   abrirPainel(props);
