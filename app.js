@@ -561,18 +561,20 @@ function aoSairMouse(e, layer) {
 // ── Setas de direção permanentes ─────────────────────
 function criarPadroeSetas(sentido, zoom) {
   if (sentido === 'pedestrian' || sentido === 'bike') return [];
-  const repeat = zoom >= 17 ? 110 : zoom >= 16 ? 170 : 250;
+  const repeat = zoom >= 17 ? 200 : zoom >= 16 ? 300 : 450;
+  const size   = zoom >= 17 ? 16 : zoom >= 16 ? 14 : 12;
   const opts = {
-    pixelSize: zoom >= 17 ? 36 : zoom >= 16 ? 28 : 22,
+    pixelSize: size,
     polygon:   false,
-    pathOptions: { color: '#00c853', weight: 2.5, opacity: 0.95 },
+    pathOptions: { color: '#00c853', weight: 2, opacity: 1 },
   };
   if (sentido === 'oneway') {
-    return [{ offset: repeat * 0.3, repeat, symbol: L.Symbol.arrowHead(opts) }];
+    return [{ offset: '50%', repeat, symbol: L.Symbol.arrowHead(opts) }];
   }
+  // mão dupla: > e < intercalados na mesma linha
   return [
-    { offset: repeat * 0.2, repeat, symbol: L.Symbol.arrowHead(opts) },
-    { offset: repeat * 0.7, repeat, symbol: L.Symbol.arrowHead({ ...opts, angleCorrection: 180 }) },
+    { offset: '25%', repeat, symbol: L.Symbol.arrowHead(opts) },
+    { offset: '75%', repeat, symbol: L.Symbol.arrowHead({ ...opts, angleCorrection: 180 }) },
   ];
 }
 
