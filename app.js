@@ -582,8 +582,12 @@ function adicionarSetaPermanente(layer, sentido) {
   if (zoom < 14) return;
   const patterns = criarPadroeSetas(sentido, zoom);
   if (!patterns.length) return;
-  const dec = L.polylineDecorator(layer, { patterns }).addTo(estado.map);
-  decoradoresPermanentes.set(layer, dec);
+  try {
+    const latlngs = layer.getLatLngs();
+    if (!latlngs || !latlngs.length) return;
+    const dec = L.polylineDecorator(latlngs, { patterns }).addTo(estado.map);
+    decoradoresPermanentes.set(layer, dec);
+  } catch(e) { /* layer ainda não pronto */ }
 }
 
 function removerSetaPermanente(layer) {
@@ -593,19 +597,21 @@ function removerSetaPermanente(layer) {
 
 function redesenharTodasSetas() {
   const zoom = estado.map.getZoom();
-  // Remove todos os decoradores existentes
   decoradoresPermanentes.forEach(dec => estado.map.removeLayer(dec));
   decoradoresPermanentes.clear();
   if (zoom < 14) return;
-  // Recria para cada layer único no índice
   const vistos = new Set();
   for (const r of indiceBusca) {
     if (vistos.has(r.layer)) continue;
     vistos.add(r.layer);
     const patterns = criarPadroeSetas(r.props.sentido, zoom);
     if (!patterns.length) continue;
-    const dec = L.polylineDecorator(r.layer, { patterns }).addTo(estado.map);
-    decoradoresPermanentes.set(r.layer, dec);
+    try {
+      const latlngs = r.layer.getLatLngs();
+      if (!latlngs || !latlngs.length) continue;
+      const dec = L.polylineDecorator(latlngs, { patterns }).addTo(estado.map);
+      decoradoresPermanentes.set(r.layer, dec);
+    } catch(e) { /* ignora layers com problema */ }
   }
 }
 
