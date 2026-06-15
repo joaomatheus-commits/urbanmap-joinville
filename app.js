@@ -644,7 +644,7 @@ function abrirPainel(props) {
   carregarImagem(srcImagem, props.nome);
 
   // Marca item ativo na lista e abre painel
-  atualizarItemAtivo(props.nome);
+  atualizarItemAtivo(props.firestoreId || props.nome);
   document.getElementById('side-panel').classList.add('open');
   document.body.classList.add('panel-open');
 }
@@ -1207,14 +1207,22 @@ function renderizarListaRuas(filtro = '') {
   const count = document.getElementById('list-count');
   const q     = filtro.toLowerCase();
 
-  const itens = q
+  // Deduplica por firestoreId (ruas com múltiplos segmentos aparecem uma vez só)
+  const visto = new Set();
+  const itens = (q
     ? indiceBusca.filter(r =>
         r.nome.toLowerCase().includes(q) ||
         (r.props.bairro || '').toLowerCase().includes(q)
       )
-    : [...indiceBusca];
+    : [...indiceBusca]
+  ).filter(r => {
+    const key = r.props.firestoreId || r.nome;
+    if (visto.has(key)) return false;
+    visto.add(key);
+    return true;
+  });
 
-  count.textContent = indiceBusca.length;
+  count.textContent = itens.length;
   ul.innerHTML = '';
 
   if (itens.length === 0) {
@@ -1224,12 +1232,12 @@ function renderizarListaRuas(filtro = '') {
     return;
   }
 
-  const nomeAtivo = estado.ruaAtual?.nome;
+  const idAtivo = estado.ruaAtual?.firestoreId;
 
   itens.forEach(r => {
-    const li   = document.createElement('li');
-    li.className = 'street-list-item' + (r.nome === nomeAtivo ? ' active' : '');
-    li.dataset.nome = r.nome;
+    const li = document.createElement('li');
+    li.className = 'street-list-item' + (r.props.firestoreId === idAtivo ? ' active' : '');
+    li.dataset.id = r.props.firestoreId || r.nome;
 
     const nomeHL   = q ? destacarTexto(r.nome,              q) : r.nome;
     const bairroHL = q ? destacarTexto(r.props.bairro || '', q) : (r.props.bairro || '');
@@ -1256,9 +1264,9 @@ function destacarTexto(texto, query) {
 }
 
 // Marca o item ativo na lista
-function atualizarItemAtivo(nome) {
+function atualizarItemAtivo(idOuNome) {
   document.querySelectorAll('.street-list-item').forEach(el => {
-    el.classList.toggle('active', el.dataset.nome === nome);
+    el.classList.toggle('active', el.dataset.id === idOuNome);
   });
 }
 
