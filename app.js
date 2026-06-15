@@ -705,6 +705,19 @@ async function salvarEdicao(e) {
       estado.camadaAtiva.setStyle(estiloAtivo(dados.tipo));
     }
 
+    // Atualiza sentido no índice e redesenha setas desta rua
+    const firestoreId = estado.ruaAtual.firestoreId;
+    for (const r of indiceBusca) {
+      if (r.props.firestoreId === firestoreId) {
+        r.sentido = dados.sentido;
+        r.props.sentido = dados.sentido;
+        r.tipo = dados.tipo;
+        r.props.tipo = dados.tipo;
+        removerSetaPermanente(r.layer);
+        adicionarSetaPermanente(r.layer, dados.sentido);
+      }
+    }
+
     cancelarEdicao();
   } catch(err) {
     alert('Erro ao salvar: ' + err.message);
