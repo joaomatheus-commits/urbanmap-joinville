@@ -365,8 +365,6 @@ function inicializarMapa() {
 
   L.control.zoom({ position: 'bottomright' }).addTo(estado.map);
 
-  // Redesenha seta ao mudar zoom (mantém rua selecionada com tamanho correto)
-  estado.map.on('zoomend', _desenharSetas);
 
   // Inicia listener em tempo real do Firestore
   iniciarListenerFirestore();
@@ -546,76 +544,25 @@ function aoSairMouse(e, layer) {
   estado.map.getContainer().style.cursor = '';
 }
 
-// ── Setas de direção (só rua selecionada) ────────────
-let _decAtivos    = [];
-let _decLayer     = null;
-let _decSentido   = null;
+// ── Foco na rua selecionada (sem setas) ──────────────
+function adicionarSetas() {}
 
-function adicionarSetas(layer, sentido) {
-  removerDecorator();
-  _decLayer   = layer;
-  _decSentido = sentido;
-  _desenharSetas();
-}
-
-function _coletarLatlngs(layer) {
-  const segs = [];
-  const extrair = (l) => {
-    if (!l.getLatLngs) return;
-    let lls = l.getLatLngs();
-    if (lls.length && Array.isArray(lls[0])) lls = lls.flat();
-    if (lls.length >= 2) segs.push(lls);
-  };
-  if (layer.eachLayer) layer.eachLayer(extrair);
-  else extrair(layer);
-  return segs;
-}
-
-function _desenharSetas() {
-  if (!_decLayer) return;
-  _decAtivos.forEach(d => estado.map.removeLayer(d));
-  _decAtivos = [];
-
-  const segs = _coletarLatlngs(_decLayer);
-  if (!segs.length) return;
-
-  // Usa o segmento mais longo para colocar a seta
-  const principal = segs.reduce((a, b) => a.length >= b.length ? a : b);
-
-  const mkArrow = () => L.Symbol.arrowHead({
-    pixelSize: 26, polygon: true,
-    pathOptions: { fillColor: '#00c853', fillOpacity: 1, stroke: false },
+function destacarRua(layerAtiva) {
+  layersPorId.forEach((layer, id) => {
+    if (layer === layerAtiva) return;
+    layer.setStyle({ opacity: 0.07, fillOpacity: 0.07 });
   });
+}
 
-  try {
-    if (_decSentido === 'twoway') {
-      // Mão dupla: seta para frente a 30% e seta para trás a 70%
-      _decAtivos.push(
-        L.polylineDecorator(principal, {
-          patterns: [{ offset: '30%', repeat: 0, symbol: mkArrow() }],
-        }).addTo(estado.map)
-      );
-      _decAtivos.push(
-        L.polylineDecorator([...principal].reverse(), {
-          patterns: [{ offset: '30%', repeat: 0, symbol: mkArrow() }],
-        }).addTo(estado.map)
-      );
-    } else {
-      // Mão única: 1 seta grande no centro
-      _decAtivos.push(
-        L.polylineDecorator(principal, {
-          patterns: [{ offset: '50%', repeat: 0, symbol: mkArrow() }],
-        }).addTo(estado.map)
-      );
-    }
-  } catch(e) {}
+function restaurarRuas() {
+  layersPorId.forEach((layer, id) => {
+    const r = indiceBusca.find(r => r.props.firestoreId === id);
+    layer.setStyle(estiloNormal(r?.props.tipo || ''));
+  });
 }
 
 function removerDecorator() {
-  _decAtivos.forEach(d => estado.map.removeLayer(d));
-  _decAtivos  = [];
-  _decLayer   = null;
-  _decSentido = null;
+  restaurarRuas();
 }
 
 // ── Painel lateral ──────────────────────────────────
@@ -1447,25 +1394,24 @@ function inicializarPesquisa() {
 // Seleciona rua a partir do resultado de busca
 function selecionarRuaPorBusca(resultado) {
   const { props } = resultado;
-  // Usa a camada completa da rua (todos os segmentos)
   const fullLayer = (props.firestoreId && layersPorId.get(props.firestoreId)) || resultado.layer;
 
-  // Resetar seleção anterior
+  // Restaura ruas anteriores e reseta seleção
+  removerDecorator();
   if (estado.camadaAtiva && estado.camadaAtiva !== fullLayer) {
     estado.camadaAtiva.setStyle(estiloNormal(estado.ruaAtual?.tipo || ''));
   }
-  removerDecorator();
 
-  // Aplica estilo ativo
+  // Esmaece todas as outras ruas para destacar a selecionada
+  destacarRua(fullLayer);
+
+  // Aplica estilo ativo na rua selecionada
   fullLayer.setStyle(estiloAtivo(props.tipo));
   fullLayer.bringToFront();
   estado.camadaAtiva = fullLayer;
 
-  // Zoom para a rua selecionada
+  // Zoom para a rua
   estado.map.fitBounds(fullLayer.getBounds(), { padding: [60, 60], maxZoom: 17 });
-
-  // Setas de direção
-  adicionarSetas(fullLayer, props.sentido);
 
   // Abre painel
   abrirPainel(props);
