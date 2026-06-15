@@ -576,41 +576,39 @@ function _desenharSetas() {
   _decAtivos.forEach(d => estado.map.removeLayer(d));
   _decAtivos = [];
 
-  const zoom   = estado.map.getZoom();
-  const repeat = zoom >= 17 ? 150 : zoom >= 16 ? 220 : 320;
-  const size   = zoom >= 17 ? 16  : zoom >= 16 ? 13  : 11;
-
-  const mkArrow = () => L.Symbol.arrowHead({
-    pixelSize: size, polygon: true,
-    pathOptions: { fillColor: '#00c853', fillOpacity: 1, stroke: false },
-  });
-
   const segs = _coletarLatlngs(_decLayer);
   if (!segs.length) return;
 
-  // Setas para frente (→) em cada segmento
-  segs.forEach(lls => {
-    try {
-      _decAtivos.push(
-        L.polylineDecorator(lls, {
-          patterns: [{ offset: 30, repeat, symbol: mkArrow() }],
-        }).addTo(estado.map)
-      );
-    } catch(e) {}
+  // Usa o segmento mais longo para colocar a seta
+  const principal = segs.reduce((a, b) => a.length >= b.length ? a : b);
+
+  const mkArrow = () => L.Symbol.arrowHead({
+    pixelSize: 26, polygon: true,
+    pathOptions: { fillColor: '#00c853', fillOpacity: 1, stroke: false },
   });
 
-  // Setas para trás (←) em cada segmento invertido — mão dupla
-  if (_decSentido === 'twoway') {
-    segs.forEach(lls => {
-      try {
-        _decAtivos.push(
-          L.polylineDecorator([...lls].reverse(), {
-            patterns: [{ offset: 30, repeat, symbol: mkArrow() }],
-          }).addTo(estado.map)
-        );
-      } catch(e) {}
-    });
-  }
+  try {
+    if (_decSentido === 'twoway') {
+      // Mão dupla: seta para frente a 30% e seta para trás a 70%
+      _decAtivos.push(
+        L.polylineDecorator(principal, {
+          patterns: [{ offset: '30%', repeat: 0, symbol: mkArrow() }],
+        }).addTo(estado.map)
+      );
+      _decAtivos.push(
+        L.polylineDecorator([...principal].reverse(), {
+          patterns: [{ offset: '30%', repeat: 0, symbol: mkArrow() }],
+        }).addTo(estado.map)
+      );
+    } else {
+      // Mão única: 1 seta grande no centro
+      _decAtivos.push(
+        L.polylineDecorator(principal, {
+          patterns: [{ offset: '50%', repeat: 0, symbol: mkArrow() }],
+        }).addTo(estado.map)
+      );
+    }
+  } catch(e) {}
 }
 
 function removerDecorator() {
