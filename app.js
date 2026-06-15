@@ -558,6 +558,19 @@ function adicionarSetas(layer, sentido) {
   _desenharSetas();
 }
 
+function _coletarLatlngs(layer) {
+  const segs = [];
+  const extrair = (l) => {
+    if (!l.getLatLngs) return;
+    let lls = l.getLatLngs();
+    if (lls.length && Array.isArray(lls[0])) lls = lls.flat();
+    if (lls.length >= 2) segs.push(lls);
+  };
+  if (layer.eachLayer) layer.eachLayer(extrair);
+  else extrair(layer);
+  return segs;
+}
+
 function _desenharSetas() {
   if (!_decLayer) return;
   _decAtivos.forEach(d => estado.map.removeLayer(d));
@@ -567,18 +580,37 @@ function _desenharSetas() {
   const repeat = zoom >= 17 ? 150 : zoom >= 16 ? 220 : 320;
   const size   = zoom >= 17 ? 16  : zoom >= 16 ? 13  : 11;
 
-  const mkArrow = (correcao) => L.Symbol.arrowHead({
-    pixelSize: size, polygon: true, angleCorrection: correcao || 0,
+  const mkArrow = () => L.Symbol.arrowHead({
+    pixelSize: size, polygon: true,
     pathOptions: { fillColor: '#00c853', fillOpacity: 1, stroke: false },
   });
 
-  const patterns = [{ offset: 30, repeat, symbol: mkArrow(0) }];
-  if (_decSentido === 'twoway')
-    patterns.push({ offset: Math.round(repeat / 2), repeat, symbol: mkArrow(180) });
+  const segs = _coletarLatlngs(_decLayer);
+  if (!segs.length) return;
 
-  try {
-    _decAtivos.push(L.polylineDecorator(_decLayer, { patterns }).addTo(estado.map));
-  } catch(e) {}
+  // Setas para frente (→) em cada segmento
+  segs.forEach(lls => {
+    try {
+      _decAtivos.push(
+        L.polylineDecorator(lls, {
+          patterns: [{ offset: 30, repeat, symbol: mkArrow() }],
+        }).addTo(estado.map)
+      );
+    } catch(e) {}
+  });
+
+  // Setas para trás (←) em cada segmento invertido — mão dupla
+  if (_decSentido === 'twoway') {
+    segs.forEach(lls => {
+      try {
+        _decAtivos.push(
+          L.polylineDecorator([...lls].reverse(), {
+            patterns: [{ offset: 30, repeat, symbol: mkArrow() }],
+          }).addTo(estado.map)
+        );
+      } catch(e) {}
+    });
+  }
 }
 
 function removerDecorator() {
