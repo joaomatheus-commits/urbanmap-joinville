@@ -325,10 +325,18 @@ function pathImagem(arquivo) {
 // ── Estado da aplicação ─────────────────────────────
 const estado = {
   map:         null,
-  camadaAtiva: null,   // layer selecionada
-  decorator:   null,   // PolylineDecorator atual
-  ruaAtual:    null,   // props da rua aberta no painel
+  camadaAtiva: null,
+  ruaAtual:    null,
 };
+
+// Decorators permanentes: layer → PolylineDecorator
+const decoradoresPermanentes = new Map();
+
+let _debounceDecorators = null;
+function agendarRedesenhoSetas() {
+  clearTimeout(_debounceDecorators);
+  _debounceDecorators = setTimeout(redesenharTodasSetas, 300);
+}
 
 // Map de layers por firestoreId para remoção precisa
 const layersPorId = new Map();
@@ -365,13 +373,8 @@ function inicializarMapa() {
 
   L.control.zoom({ position: 'bottomright' }).addTo(estado.map);
 
-  // Redesenha setas ao mudar zoom
-  estado.map.on('zoomend', () => {
-    if (estado.camadaAtiva && estado.ruaAtual) {
-      removerDecorator();
-      adicionarSetas(estado.camadaAtiva, estado.ruaAtual.sentido);
-    }
-  });
+  // Redesenha todas as setas ao mudar zoom
+  estado.map.on('zoomend', redesenharTodasSetas);
 
   // Inicia listener em tempo real do Firestore
   iniciarListenerFirestore();
@@ -440,6 +443,7 @@ function adicionarRuaDoFirestore(doc) {
   layer.eachLayer(l => {
     indiceBusca.push({ nome: props.nome, tipo: props.tipo, sentido: props.sentido, layer: l, props });
   });
+  agendarRedesenhoSetas();
 }
 
 function removerRuaDoMapa(firestoreId) {
@@ -448,6 +452,9 @@ function removerRuaDoMapa(firestoreId) {
 
   estado.map.removeLayer(layer);
   layersPorId.delete(firestoreId);
+
+  // Remove decoradores dos segmentos desta rua
+  layer.eachLayer(l => removerSetaPermanente(l));
 
   // Remove do índice de busca
   const idx = indiceBusca.findIndex(r => r.props.firestoreId === firestoreId);
@@ -482,6 +489,7 @@ async function carregarRuasLocais() {
     });
   });
   renderizarListaRuas();
+  agendarRedesenhoSetas();
 }
 
 // ── Eventos por feature ─────────────────────────────
@@ -550,48 +558,60 @@ function aoSairMouse(e, layer) {
   estado.map.getContainer().style.cursor = '';
 }
 
-// ── Setas de direção (PolylineDecorator) ────────────
-function adicionarSetas(layer, sentido) {
-  if (sentido === 'pedestrian') return;
-
-  const zoom = estado.map.getZoom();
-  if (zoom < 15) return; // muito longe — não mostrar setas
-
-  // Repeat cresce com o zoom: longe = mais espaçado, perto = mais denso
-  const repeat = zoom >= 17 ? 120 : zoom >= 16 ? 180 : 260;
-
-  const arrowOpts = {
-    pixelSize:   14,
-    polygon:     false,
-    pathOptions: {
-      color:   '#00c853',
-      weight:  2.5,
-      opacity: 0.9,
-    },
+// ── Setas de direção permanentes ─────────────────────
+function criarPadroeSetas(sentido, zoom) {
+  if (sentido === 'pedestrian' || sentido === 'bike') return [];
+  const repeat = zoom >= 17 ? 110 : zoom >= 16 ? 170 : zoom >= 15 ? 250 : 400;
+  const opts = {
+    pixelSize: zoom >= 16 ? 12 : 9,
+    polygon:   false,
+    pathOptions: { color: '#00c853', weight: 2, opacity: 0.85 },
   };
-
-  let patterns = [];
-
   if (sentido === 'oneway') {
-    patterns = [{ offset: repeat * 0.3, repeat, symbol: L.Symbol.arrowHead({ ...arrowOpts }) }];
-  } else if (sentido === 'twoway') {
-    patterns = [
-      { offset: repeat * 0.2, repeat, symbol: L.Symbol.arrowHead({ ...arrowOpts }) },
-      { offset: repeat * 0.7, repeat, symbol: L.Symbol.arrowHead({ ...arrowOpts, angleCorrection: 180 }) },
-    ];
+    return [{ offset: repeat * 0.3, repeat, symbol: L.Symbol.arrowHead(opts) }];
   }
+  return [
+    { offset: repeat * 0.2, repeat, symbol: L.Symbol.arrowHead(opts) },
+    { offset: repeat * 0.7, repeat, symbol: L.Symbol.arrowHead({ ...opts, angleCorrection: 180 }) },
+  ];
+}
 
-  if (patterns.length > 0) {
-    estado.decorator = L.polylineDecorator(layer, { patterns }).addTo(estado.map);
+function adicionarSetaPermanente(layer, sentido) {
+  removerSetaPermanente(layer);
+  const zoom = estado.map.getZoom();
+  if (zoom < 14) return;
+  const patterns = criarPadroeSetas(sentido, zoom);
+  if (!patterns.length) return;
+  const dec = L.polylineDecorator(layer, { patterns }).addTo(estado.map);
+  decoradoresPermanentes.set(layer, dec);
+}
+
+function removerSetaPermanente(layer) {
+  const dec = decoradoresPermanentes.get(layer);
+  if (dec) { estado.map.removeLayer(dec); decoradoresPermanentes.delete(layer); }
+}
+
+function redesenharTodasSetas() {
+  const zoom = estado.map.getZoom();
+  // Remove todos os decoradores existentes
+  decoradoresPermanentes.forEach(dec => estado.map.removeLayer(dec));
+  decoradoresPermanentes.clear();
+  if (zoom < 14) return;
+  // Recria para cada layer único no índice
+  const vistos = new Set();
+  for (const r of indiceBusca) {
+    if (vistos.has(r.layer)) continue;
+    vistos.add(r.layer);
+    const patterns = criarPadroeSetas(r.props.sentido, zoom);
+    if (!patterns.length) continue;
+    const dec = L.polylineDecorator(r.layer, { patterns }).addTo(estado.map);
+    decoradoresPermanentes.set(r.layer, dec);
   }
 }
 
-function removerDecorator() {
-  if (estado.decorator) {
-    estado.map.removeLayer(estado.decorator);
-    estado.decorator = null;
-  }
-}
+// Mantido para compatibilidade (não faz nada — setas são permanentes)
+function adicionarSetas() {}
+function removerDecorator() {}
 
 // ── Painel lateral ──────────────────────────────────
 function abrirPainel(props) {
