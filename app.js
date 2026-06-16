@@ -1427,36 +1427,49 @@ function inicializarImportacao() {
   // Clique no botão abre seletor de arquivo
   btnImport.addEventListener('click', () => fileInput.click());
 
-  // Arquivo selecionado
+  // Arquivo selecionado — salva DataURL no Firestore
   fileInput.addEventListener('change', () => {
     const arquivo = fileInput.files[0];
-    if (!arquivo) return;
+    if (!arquivo || !estado.ruaAtual) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const dataURL = e.target.result;
-      if (estado.ruaAtual) {
-        imagensPersonalizadas.set(estado.ruaAtual.nome, dataURL);
-        carregarImagem(dataURL, estado.ruaAtual.nome);
-        // Mostra o nome do arquivo no campo de texto como feedback
-        pathInput.value = arquivo.name;
-        pathInput.title = arquivo.name;
+      imagensPersonalizadas.set(estado.ruaAtual.nome, dataURL);
+      carregarImagem(dataURL, estado.ruaAtual.nome);
+      pathInput.value = arquivo.name;
+
+      if (estado.ruaAtual.firestoreId) {
+        try {
+          await window.db.collection('ruas').doc(estado.ruaAtual.firestoreId).update({ imagem: dataURL });
+          estado.ruaAtual.imagem = dataURL;
+        } catch(err) {
+          alert('Imagem muito grande para salvar na nuvem.\nUse a pasta feito/ e defina o caminho manualmente.');
+        }
       }
     };
     reader.readAsDataURL(arquivo);
-    // Limpa para permitir reimportar o mesmo arquivo
     fileInput.value = '';
   });
 
-  // Aplicar caminho digitado manualmente
+  // Aplicar caminho digitado — salva no Firestore
   btnApply.addEventListener('click', aplicarCaminho);
   pathInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') aplicarCaminho(); });
 
-  function aplicarCaminho() {
+  async function aplicarCaminho() {
     const caminho = pathInput.value.trim();
     if (!caminho || !estado.ruaAtual) return;
     imagensPersonalizadas.set(estado.ruaAtual.nome, caminho);
     carregarImagem(caminho, estado.ruaAtual.nome);
+
+    if (estado.ruaAtual.firestoreId) {
+      try {
+        await window.db.collection('ruas').doc(estado.ruaAtual.firestoreId).update({ imagem: caminho });
+        estado.ruaAtual.imagem = caminho;
+      } catch(err) {
+        console.warn('Erro ao salvar caminho:', err);
+      }
+    }
   }
 }
 
