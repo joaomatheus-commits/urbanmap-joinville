@@ -1457,8 +1457,13 @@ function inicializarImportacao() {
   pathInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') aplicarCaminho(); });
 
   async function aplicarCaminho() {
-    const caminho = pathInput.value.trim();
+    let caminho = pathInput.value.trim();
     if (!caminho || !estado.ruaAtual) return;
+    // Auto-adiciona feito/ se for só um nome de arquivo sem pasta
+    if (!caminho.includes('/') && !caminho.startsWith('data:')) {
+      caminho = 'feito/' + caminho;
+      pathInput.value = caminho;
+    }
     imagensPersonalizadas.set(estado.ruaAtual.nome, caminho);
     carregarImagem(caminho, estado.ruaAtual.nome);
 
