@@ -402,6 +402,20 @@ function iniciarListenerFirestore() {
     );
 }
 
+function cliparGeometriaBbox(geometry) {
+  if (geometry.type === 'LineString') {
+    const coords = geometry.coordinates.filter(dentroBbox);
+    return coords.length >= 2 ? { ...geometry, coordinates: coords } : null;
+  }
+  if (geometry.type === 'MultiLineString') {
+    const segs = geometry.coordinates
+      .map(seg => seg.filter(dentroBbox))
+      .filter(seg => seg.length >= 2);
+    return segs.length ? { ...geometry, coordinates: segs } : null;
+  }
+  return geometry;
+}
+
 function adicionarRuaDoFirestore(doc) {
   const dados = doc.data();
   let geometry;
@@ -410,6 +424,10 @@ function adicionarRuaDoFirestore(doc) {
   } catch {
     return;
   }
+
+  // Remove partes fora de Joinville
+  geometry = cliparGeometriaBbox(geometry);
+  if (!geometry) return;
 
   const props = {
     firestoreId: doc.id,
