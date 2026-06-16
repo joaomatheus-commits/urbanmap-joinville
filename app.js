@@ -818,6 +818,12 @@ function voltarStep1() {
 // Bbox de Joinville para filtrar a busca no Overpass
 const JOINVILLE_BBOX = '-26.60,-49.10,-26.10,-48.55';
 
+// Limites geográficos de Joinville para filtrar coordenadas fora da cidade
+const JV_BOUNDS = { minLat: -26.60, maxLat: -26.10, minLng: -49.10, maxLng: -48.55 };
+const dentroBbox = ([lng, lat]) =>
+  lat >= JV_BOUNDS.minLat && lat <= JV_BOUNDS.maxLat &&
+  lng >= JV_BOUNDS.minLng && lng <= JV_BOUNDS.maxLng;
+
 // ── Passo 1: autocomplete via Nominatim ─────────────
 async function buscarNominatim(query) {
   const spinner = document.getElementById('osm-search-spinner');
@@ -935,10 +941,10 @@ async function obterRuaCompletaOverpass(nome) {
 
   if (!data.elements?.length) throw new Error('Rua não encontrada no OSM.');
 
-  // Extrai todos os segmentos como [[lng,lat],…]
-  const segmentos = data.elements.map(way =>
-    way.geometry.map(n => [n.lon, n.lat])
-  );
+  // Extrai segmentos filtrando coordenadas fora de Joinville
+  const segmentos = data.elements
+    .map(way => way.geometry.map(n => [n.lon, n.lat]).filter(dentroBbox))
+    .filter(seg => seg.length >= 2);
 
   // Detecta tipo e sentido predominante
   const tipos = data.elements.map(w => w.tags?.highway || '').filter(Boolean);
@@ -1702,7 +1708,9 @@ async function importarCatalogoBatch() {
     if (!match) { erros++; continue; }
 
     try {
-      const segs    = match.ways.map(w => w.geometry.map(n => [n.lon, n.lat]));
+      const segs    = match.ways
+        .map(w => w.geometry.map(n => [n.lon, n.lat]).filter(dentroBbox))
+        .filter(s => s.length >= 2);
       const tipos   = match.ways.map(w => w.tags?.highway || '').filter(Boolean);
       const { tipo, sentido: sentidoBase } = TIPO_OSM[modoArray(tipos)] || { tipo: 'Via local', sentido: 'twoway' };
       const onewayCount = match.ways.filter(w => w.tags?.oneway === 'yes' || w.tags?.oneway === '1').length;
