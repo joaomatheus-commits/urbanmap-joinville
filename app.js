@@ -834,10 +834,10 @@ function voltarStep1() {
 }
 
 // Bbox de Joinville para filtrar a busca no Overpass
-const JOINVILLE_BBOX = '-26.60,-49.10,-26.17,-48.83';
+const JOINVILLE_BBOX = '-26.60,-49.03,-26.17,-48.83';
 
 // Limites geográficos de Joinville para filtrar coordenadas fora da cidade
-const JV_BOUNDS = { minLat: -26.60, maxLat: -26.17, minLng: -49.10, maxLng: -48.83 };
+const JV_BOUNDS = { minLat: -26.60, maxLat: -26.17, minLng: -49.03, maxLng: -48.83 };
 const dentroBbox = ([lng, lat]) =>
   lat >= JV_BOUNDS.minLat && lat <= JV_BOUNDS.maxLat &&
   lng >= JV_BOUNDS.minLng && lng <= JV_BOUNDS.maxLng;
